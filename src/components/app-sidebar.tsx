@@ -51,31 +51,31 @@ const data = {
   navMain: [
     {
       title: "Viewer",
-      url: "#",
+      url: "/view",
       icon: SquareTerminal,
       isActive: true,
       items: [
         {
           title: "Dashboard",
-          url: "#",
+          url: "/view/dashboard",
         },
         {
-          title: "Schools",
-          url: "#",
+          title: "School",
+          url: "/view/school",
         },
         {
-          title: "Classes",
-          url: "#",
+          title: "Classroom",
+          url: "/view/classroom",
         },
         {
           title: "Users",
-          url: "#",
+          url: "/view/user",
         },
       ],
     },
     {
       title: "Creator",
-      url: "#",
+      url: "/creator",
       icon: Plus,
       items: [
         {
@@ -87,8 +87,8 @@ const data = {
           url: "/creator/user",
         },
         {
-          title: "Class",
-          url: "/creator/class",
+          title: "Classroom",
+          url: "/creator/classroom",
         },
       ],
     },
@@ -159,7 +159,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        {/* <NavUser user={data.user} /> */}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
