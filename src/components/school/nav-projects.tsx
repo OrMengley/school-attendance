@@ -4,7 +4,7 @@ import {
   Trash2,
   type LucideIcon,
 } from "lucide-react"
-
+import { Link } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,10 +40,14 @@ export function NavProjects({
         {projects.map((item) => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild>
-              <a href={item.url}>
+              {/* <a href={item.url}>
                 <item.icon />
                 <span>{item.name}</span>
-              </a>
+              </a> */}
+              <Link to={item.url}>
+              <item.icon />
+              {item.name}
+              </Link>
             </SidebarMenuButton>
             <DropdownMenu>
               <DropdownMenuContent

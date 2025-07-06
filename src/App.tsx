@@ -18,12 +18,15 @@ import {UserProvider} from "./context/UserContext";
 import React from "react";
 import RequireAuth from "./components/RequireAuth";
 import UserTable from "./pages/Users";
+import { Toaster } from "sonner";
+
 function App() {
     return (
         <SidebarProvider>
             <React.StrictMode>
                 <UserProvider>
                     <Router>
+                        <Toaster position="top-right" />
                         <Routes>
                             <Route path="/login"
                                 element={<Login/>}/>
@@ -42,6 +45,7 @@ function App() {
                                     <RequireAuth
                                 role="admin"><SchoolLayout/></RequireAuth>
                             }>
+
                                 <Route path="/school/dashboard"
                                     element={<SchoolDashboard/>}/>
                                 <Route path="/school/term"
@@ -56,6 +60,7 @@ function App() {
                                     element={<SchoolGrade/>}/>
                                 <Route path="/school/student"
                                     element={<SchoolStudent/>}/>
+
                             </Route>
                             <Route path="/"
                                 element={
