@@ -56,6 +56,10 @@ const data = {
                     url: "/school/dashboard"
                 },
                 {
+                    title: "Department",
+                    url: "/school/department"
+                },
+                {
                     title: "Terms",
                     url: "/school/term"
                 },
@@ -74,33 +78,37 @@ const data = {
                     url: "/school/student"
                 },
             ]
-        }, {
-            title: "Creator",
-            url: "/school/creator",
-            icon: Plus,
-            items: [
-                {
-                    title: "User",
-                    url: "/school/creator/user"
-                },
-                {
-                    title: "Term",
-                    url: "/school/creator/term"
-                },
-                {
-                    title: "Grade",
-                    url: "/school/creator/grade"
-                },
-                {
-                    title: "Classroom",
-                    url: "/school/creator/classroom"
-                }, {
-                    title: "Student",
-                    url: "/school/creator/student"
-                },
+        }, 
+        
+        // {
+        //     title: "Creator",
+        //     url: "/school/creator",
+        //     icon: Plus,
+        //     items: [
+        //         {
+        //             title: "User",
+        //             url: "/school/creator/user"
+        //         },
+        //         {
+        //             title: "Term",
+        //             url: "/school/creator/term"
+        //         },
+        //         {
+        //             title: "Grade",
+        //             url: "/school/creator/grade"
+        //         },
+        //         {
+        //             title: "Classroom",
+        //             url: "/school/creator/classroom"
+        //         }, {
+        //             title: "Student",
+        //             url: "/school/creator/student"
+        //         },
 
-            ]
-        }, {
+        //     ]
+        // },
+        
+        {
             title: "Trash",
             url: "/school/trash",
             icon: Trash,
@@ -109,9 +117,12 @@ const data = {
                     title: "User",
                     url: "/school/trash/user"
                 }, {
+                    title: "Department",
+                    url: "/school/trash/department"
+                }, {
                     title: "Term",
                     url: "/school/trash/term"
-                }, {
+                },{
                     title: "Grade",
                     url: "/school/trash/grade"
                 }, {

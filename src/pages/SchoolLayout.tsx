@@ -74,7 +74,9 @@ export default function SchoolLayout() {
           </Breadcrumb>
         </header>
         {/* Main Content Area */}
-        <Outlet />
+        <div className="p-4">
+        <Outlet/>
+        </div>
       </div>
     </div>
   );
