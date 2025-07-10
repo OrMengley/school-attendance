@@ -49,7 +49,6 @@ const data = {
             title: "Viewer",
             url: "/school",
             icon: SquareTerminal,
-            isActive: true,
             items: [
                 {
                     title: "Dashboard",

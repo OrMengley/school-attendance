@@ -34,15 +34,16 @@ export default function UserTable() {
 
   return (
     <DataTable
+     
       data={users}
       title="👥 Users"
-      columns={[
+      columns={
+        [
         { label: "Name", key: "name" },
         { label: "Email", key: "email" },
         { label: "Role", key: "role" },
         { label: "School", key: "schoolId" },
       ]}
-      onDelete={handleDeleteUsers}
     />
   );
 }

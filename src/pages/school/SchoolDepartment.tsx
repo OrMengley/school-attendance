@@ -64,21 +64,8 @@ export default function SchoolDepartment() {
     }
   };
   
-  // const handleDeleteDepartments = async (ids: string[]) => {
-  //   try {
-  //     // In a real application, you would call your API to delete the departments
-  //     // Example: await axios.delete("/departments", { data: { ids } });
-      
-  //     console.log("Deleting departments with IDs:", ids);
-  //     toast.success(`Successfully deleted ${ids.length} department(s)`);
-      
-  //     // Refetch data after deletion
-  //     refetch();
-  //   } catch (error) {
-  //     console.error("Error deleting departments:", error);
-  //     toast.error("Failed to delete departments");
-  //   }
-  // };
+ 
+  
 
   if (loading) return <p>Loading departments...</p>;
 

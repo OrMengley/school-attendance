@@ -50,12 +50,14 @@ export default function TermPage() {
   const handleSubmitTerm = (data: { _id?: string; year: string;  departmentId?: string }) => {
     console.log(data);
     API.post("/terms", data)
-    .then((res) => {
+    .then((res:any) => {
+      console.log(res);
       toast.success("Term created successfully");
       refetch();
       setIsModalOpen(false);
     })
-    .catch((err) => {
+    .catch((err: any) => {
+      console.log(err);
       toast.error("Failed to create term");
     });
   };

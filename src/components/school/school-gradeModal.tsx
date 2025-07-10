@@ -110,9 +110,9 @@ export default function SchoolCreateGradeModal({
         </form>
       </DialogContent>
       <DialogDescription>
-        <p>
+        
             {initialData ? "Edit Grade" : "Create Grade"}
-        </p>
+        
       </DialogDescription>
     </Dialog>
   );
