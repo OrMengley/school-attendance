@@ -19,6 +19,12 @@ import React from "react";
 import RequireAuth from "./components/RequireAuth";
 import UserTable from "./pages/Users";
 import { Toaster } from "sonner";
+import SchoolUserTrash from "./pages/school/SchoolUserTrash";
+import SchoolClassroomTrash from "./pages/school/SchoolClassroomTrash";
+import SchoolDepartmentTrash from "./pages/school/SchoolDepartmentTrash";
+import SchoolGradeTrash from "./pages/school/SchoolGradeTrash";
+import SchoolStudentTrash from "./pages/school/SchoolStudentTrash";
+import SchoolTermTrash from "./pages/school/SchoolTermTrash";
 
 function App() {
     return (
@@ -60,7 +66,18 @@ function App() {
                                     element={<SchoolGrade/>}/>
                                 <Route path="/school/student"
                                     element={<SchoolStudent/>}/>
-
+                                <Route path="/school/trash/user"
+                                    element={<SchoolUserTrash/>}/>
+                                <Route path="/school/trash/classroom"
+                                    element={<SchoolClassroomTrash/>}/>
+                                <Route path="/school/trash/department"
+                                    element={<SchoolDepartmentTrash/>}/>
+                                <Route path="/school/trash/grade"
+                                    element={<SchoolGradeTrash/>}/>
+                                <Route path="/school/trash/student"
+                                    element={<SchoolStudentTrash/>}/>
+                                <Route path="/school/trash/term"
+                                    element={<SchoolTermTrash/>}/>
                             </Route>
                             <Route path="/"
                                 element={

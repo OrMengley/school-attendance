@@ -1,10 +1,9 @@
 import DataTable from "../../components/school/data-table";
-import { toast } from "sonner";
 import useFetchData from "../../hooks/useFetchData";
 import SchoolCreateClassroomModal from "../../components/school/school-classroomModal";
 import SchoolClassroomDetailModal from "../../components/school/school-classroom-detail-modal";
 import { useState } from "react";
-import API from "../../lib/axios";
+
 import { Button } from "../../components/ui/button";
 import { Edit, Eye } from "lucide-react";
 

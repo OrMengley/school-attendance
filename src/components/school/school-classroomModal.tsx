@@ -16,7 +16,15 @@ import API from "../../lib/axios";
 import { toast } from "sonner";
 
 
-
+interface TeacherType {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+  role: string;
+  schoolId?: string;
+  classroomIds?: string[];
+}
 
 interface TermType {
     _id: string;
@@ -40,6 +48,7 @@ interface ClassroomType {
     createdAt: string;
     grade: GradeType;
     term: TermType;
+    teacherIds?: string[];
   }
 
 
@@ -60,14 +69,15 @@ export default function SchoolCreateClassroomModal({
   const [name, setName] = useState(initialData?.name || "");
   const [gradeId, setGradeId] = useState(initialData?.gradeId || "");
   const [termId, setTermId] = useState(initialData?.grade?.termId || "");
+  
 
   const [grades, setGrades] = useState<GradeType[]>([]);
   const [terms, setTerms] = useState<TermType[]>([]);
+  const [teachers, setTeachers] = useState<TeacherType[]>([]);
+  const [teacherId, setTeacherId] = useState<string>("");
   const { user } = useUser();
   
-  const gradesLoading = grades.length === 0;
-  const termsLoading = terms.length === 0;
-  
+
   useEffect(() => {
     if (isOpen) {
         API.get("/terms")
@@ -77,10 +87,15 @@ export default function SchoolCreateClassroomModal({
         API.get("/grades")
         .then((res) => setGrades(res.data || []))
         .catch(() => setGrades([]));
-        
+
+            API.get("/users?role=teacher&schoolId=" + user?.schoolId)
+            .then((res) => setTeachers(res.data || []))
+            .catch(() => setTeachers([]));
+
       setName(initialData?.name || "");
       setGradeId(initialData?.gradeId || "");
       setTermId(initialData?.grade?.termId || "");
+      
     }
   }, [isOpen, initialData]);
 
@@ -92,6 +107,7 @@ export default function SchoolCreateClassroomModal({
       gradeId,
       termId,
       schoolId: user?.schoolId,
+      teacherIds: [],
     }
     
     try {
@@ -120,7 +136,7 @@ export default function SchoolCreateClassroomModal({
     }
   };
 
-  if (gradesLoading || termsLoading) return <p>Loading...</p>;
+  
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -157,7 +173,7 @@ export default function SchoolCreateClassroomModal({
               }
             </SelectContent>
           </Select>
-
+         
           </div>
           <div className="">
             <Input
@@ -167,7 +183,23 @@ export default function SchoolCreateClassroomModal({
             required
           />
           </div>
-        
+          
+
+          <div className="mt-2">
+            <Select value={teacherId} onValueChange={setTeacherId} required>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="ជ្រើសរើសគ្រូបង្រៀន" />
+              </SelectTrigger>
+              <SelectContent>
+                {teachers.map((teacher) => (
+                  <SelectItem key={teacher.id} value={teacher.id || ""}>
+                    {teacher.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
           <DialogFooter className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel

@@ -4,6 +4,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "../../components/ui/dialog";
 import { Button } from "../../components/ui/button";
 import { Separator } from "../../components/ui/separator";
@@ -112,29 +113,18 @@ export default function SchoolClassroomDetailModal({
           </div>
 
           <Separator />
-
-          {/* Additional Information */}
-          <div className="space-y-2">
-            <h4 className="font-medium text-gray-900">Additional Information</h4>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div>
-                <span className="text-gray-600">Classroom ID:</span>
-                <p className="font-mono text-xs bg-gray-100 p-1 rounded">{classroom._id}</p>
-              </div>
-              <div>
-                <span className="text-gray-600">Grade ID:</span>
-                <p className="font-mono text-xs bg-gray-100 p-1 rounded">{classroom.gradeId}</p>
-              </div>
-            </div>
-          </div>
         </div>
-
+        <DialogDescription>
+          
+        </DialogDescription>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>
         </DialogFooter>
+
       </DialogContent>
+      
     </Dialog>
   );
 } 
