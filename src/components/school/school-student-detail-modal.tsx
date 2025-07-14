@@ -14,6 +14,43 @@ import { Separator } from "../ui/separator";
 import { Calendar, MapPin, Phone, User, CalendarDays, Building, GraduationCap } from "lucide-react";
 
 
+
+
+
+interface TermType {
+  _id: string;
+  year: string;
+  departmentId: string;
+  createdAt: string;
+}
+interface ClassroomType {
+  _id: string;
+  name: string;
+  gradeId: string;
+  termId: string;
+  createdAt: string;
+  grade: {
+      _id: string;
+      name: string;
+      termId: string;
+      schoolId?: string;
+      createdAt: string;
+      term: {
+          _id: string;
+          year: string;
+          departmentId: string;
+          createdAt: string;
+      };
+  };
+  term: {
+      _id: string;
+      year: string;
+      departmentId: string;
+      createdAt: string;
+  };
+}
+
+
 export interface Enrollment {
   termId: string;
   classroomId: string;
@@ -41,39 +78,7 @@ interface StudentType {
 
 }
 
-interface ClassroomType {
-    _id: string;
-    name: string;
-    gradeId: string;
-    termId: string;
-    createdAt: string;
-    grade: {
-        _id: string;
-        name: string;
-        termId: string;
-        schoolId?: string;
-        createdAt: string;
-        term: {
-            _id: string;
-            year: string;
-            departmentId: string;
-            createdAt: string;
-        };
-    };
-    term: {
-        _id: string;
-        year: string;
-        departmentId: string;
-        createdAt: string;
-    };
-}
 
-interface TermType {
-    _id: string;
-    year: string;
-    departmentId: string;
-    createdAt: string;
-}
 
 interface StudentDetailModalProps {
   isOpen: boolean;
@@ -88,12 +93,14 @@ export default function StudentDetailModal({
 }: StudentDetailModalProps) {
   const [student, setStudent] = useState<StudentType | null>(null);
   useEffect(() => {
+    
     if (isOpen && selectedStudent) {
       setStudent(selectedStudent);
     }
   }, [isOpen, selectedStudent]);
 
- 
+  console.log("student", selectedStudent);
+  
   if (!student) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -130,153 +137,132 @@ export default function StudentDetailModal({
   }
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-xl border-0">
         <DialogHeader>
-          <DialogTitle>Student Details</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-6">
-          {/* Student Header */}
-          <div className="flex items-center space-x-4">
-            <Avatar className="h-16 w-16">
+          <div className="flex items-center space-x-4 pb-4 border-b border-gray-200">
+            <Avatar className="h-16 w-16 ring-2 ring-blue-100 shadow">
               <AvatarImage src={student.profileUrl} alt={student.name} />
-              <AvatarFallback className="text-lg">
+              <AvatarFallback className="text-xl bg-gray-100 text-gray-700">
                 {student.name}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <h2 className="text-2xl font-bold">{student.name}</h2>
+              <h2 className="text-2xl font-bold text-gray-900">{student.name}</h2>
               <div className="flex items-center space-x-2 mt-1">
-                <Badge variant={student.status === "active" ? "default" : "secondary"}>
+                <Badge className={
+                  student.status === "active"
+                    ? "bg-blue-100 text-blue-700 px-3 py-1 rounded-full"
+                    : "bg-gray-200 text-gray-500 px-3 py-1 rounded-full"
+                }>
                   {student.status}
                 </Badge>
-                {/* <span className="text-sm text-gray-500">ID: {student._id}</span> */}
               </div>
             </div>
+            <Button variant="outline" onClick={onClose} className="ml-auto border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition rounded-full">
+              Close
+            </Button>
           </div>
-
-          <Separator />
-
+        </DialogHeader>
+        <div className="space-y-8 py-6 px-2 md:px-6">
           {/* Personal Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold flex items-center">
-              <User className="h-5 w-5 mr-2" />
+          <div className="rounded-lg p-0">
+            <h3 className="text-lg font-semibold flex items-center text-blue-700 mb-4">
+              <User className="h-5 w-5 mr-2 text-blue-400" />
               Personal Information
             </h3>
-            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-500">First Name</label>
-                <p className="text-sm">{student.firstName || "Not specified"}</p>
+                <label className="text-sm font-medium text-gray-500">First Name (ត្រកូល)</label>
+                <p className="text-base text-gray-800">{student.firstName || "Not specified"}</p>
               </div>
-              
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-500">Last Name</label>
-                <p className="text-sm">{student.lastName || "Not specified"}</p>
+                <label className="text-sm font-medium text-gray-500">Last Name (ឈ្មោះ)</label>
+                <p className="text-base text-gray-800">{student.lastName || "Not specified"}</p>
               </div>
-              
-
-              
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-500 flex items-center">
-                  <CalendarDays className="h-4 w-4 mr-1" />
-                  Date of Birth
+                  <CalendarDays className="h-4 w-4 mr-1 text-blue-300" />
+                  Date of Birth (ថ្ងៃខែឆ្នាំកំណើត)
                 </label>
-                <p className="text-sm">{student.dob ? format(new Date(student.dob), "PPP") : "Not specified"}</p>
+                <p className="text-base text-gray-800">{student.dob ? format(new Date(student.dob), "PPP") : "Not specified"}</p>
               </div>
-              
               <div className="space-y-2 md:col-span-2">
                 <label className="text-sm font-medium text-gray-500 flex items-center">
-                  <MapPin className="h-4 w-4 mr-1" />
-                  Address
+                  <MapPin className="h-4 w-4 mr-1 text-blue-300" />
+                  Address (អាសយដ្ឋាន)
                 </label>
-                <p className="text-sm">{student.address || "Not specified"}</p>
+                <p className="text-base text-gray-800">{student.address || "Not specified"}</p>
               </div>
             </div>
           </div>
-
           <Separator />
-
           {/* Contact Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold flex items-center">
-              <Phone className="h-5 w-5 mr-2" />
+          <div className="rounded-lg p-0">
+            <h3 className="text-lg font-semibold flex items-center text-blue-700 mb-4">
+              <Phone className="h-5 w-5 mr-2 text-blue-400" />
               Contact Information
             </h3>
-            
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-500">Parent Phone</label>
-              <p className="text-sm">{student.parentPhone}</p>
+              <label className="text-sm font-medium text-gray-500">Parent Phone (លេខទូរស័ព្ទអាណាព្យាបាល)</label>
+              <p className="text-base text-gray-800">{student.parentPhone}</p>
             </div>
           </div>
-
           <Separator />
-
           {/* Academic Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold flex items-center">
-              <GraduationCap className="h-5 w-5 mr-2" />
+          <div className="rounded-lg p-0">
+            <h3 className="text-lg font-semibold flex items-center text-blue-700 mb-4">
+              <GraduationCap className="h-5 w-5 mr-2 text-blue-400" />
               Academic Information
             </h3>
-            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-500 flex items-center">
-                  <Building className="h-4 w-4 mr-1" />
-                  Classroom
+                  <Building className="h-4 w-4 mr-1 text-blue-300" />
+                  Classroom (បន្ទប់សិក្សា)
                 </label>
-                <p className="text-sm">
+                <p className="text-base text-gray-800">
                   {student.classroom?.name || "Not assigned"}
                 </p>
                 {student.classroom?.grade?.name && (
-                  <p className="text-xs text-gray-500">Grade: {student.classroom.grade.name}</p>
+                  <p className="text-xs text-blue-600">Grade: <span className="font-bold">{student.classroom.grade.name}</span></p>
                 )}
               </div>
-              
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-500 flex items-center">
-                  <Calendar className="h-4 w-4 mr-1" />
-                  Academic Term
+                  <Calendar className="h-4 w-4 mr-1 text-blue-300" />
+                  Academic Term (ឆ្នាំសិក្សា)
                 </label>
-                <p className="text-sm">
+                <p className="text-base text-gray-800">
                   {student.term?.year || "Not assigned"}
                 </p>
               </div>
             </div>
           </div>
-
           <Separator />
-
           {/* System Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">System Information</h3>
-            
+          <div className="rounded-lg p-0">
+            <h3 className="text-lg font-semibold flex items-center text-blue-700 mb-4">
+              <Calendar className="h-5 w-5 mr-2 text-blue-400" />
+              System Information
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-500">Enrollment Date</label>
-                <p className="text-sm">
+                <label className="text-sm font-medium text-gray-500">Enrollment</label>
+                <p className="text-base text-gray-800">
                   {student.enrollments && student.enrollments.length > 0 
                     ? `${student.enrollments.length} enrollment(s)` 
                     : "No enrollments"}
                 </p>
               </div>
-              
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-500">Created At</label>
-                <p className="text-sm">{student.createdAt ? format(new Date(student.createdAt), "PPP") : "Not specified"}</p>
+                <p className="text-base text-gray-800">{student.createdAt ? format(new Date(student.createdAt), "PPP") : "Not specified"}</p>
               </div>
             </div>
           </div>
         </div>
-
-        <div className="flex justify-end space-x-2 pt-4">
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
-        </div>   
       </DialogContent>
-      <DialogDescription>
-        
-      </DialogDescription>
+      <DialogDescription></DialogDescription>
     </Dialog>
   );
 } 
