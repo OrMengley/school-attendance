@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "../../components/ui/dialog";
 import { Button } from "../../components/ui/button";
 
@@ -30,6 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "../../components/ui/table";
+import useFetchData from "../../hooks/useFetchData";
 
 
 export interface Enrollment {
@@ -107,9 +109,8 @@ export default function SchoolClassroomDetailModal({
   classroom,
 }: ClassroomDetailModalProps) {
   if (!classroom) return null;
-
-  
-  const [students, setStudents] = useState<StudentType[]>([]);
+  const { data: allStudents} = useFetchData<StudentType>("/students");
+  const [studentsByClassroom, setStudentsByClassroom] = useState<StudentType[]>([]);
   const [loading, setLoading] = useState(true);
   const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
@@ -132,31 +133,29 @@ export default function SchoolClassroomDetailModal({
     }
   };
 
-  const fetchStudents = async () => {
+  const fetchStudentsByClassroomAndTerm = async (classroomId: string, termId: string) => {
     try {
       setLoading(true);
-      const response = await API.get("/students");
+      const response =  await API.get(`/students/classroom/${classroomId}/term/${termId}`);
       // Add null check for response data
       if (response.data && Array.isArray(response.data)) {
-        setStudents(response.data);
+        setStudentsByClassroom(response.data);
+        
       } else {
-        console.warn("Invalid students data received:", response.data);
-        setStudents([]);
+        // console.warn("Invalid students data received:", response.data);
+        setStudentsByClassroom([]);
         toast.error("Invalid data format received");
       }
     } catch (error) {
       console.error("Error fetching students:", error);
       toast.error("Failed to fetch students");
-      setStudents([]); // Set empty array on error
+      setStudentsByClassroom([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchStudents();
-  }, []);
-
+ 
   const handleStudentSelection = (studentId: string, isChecked: boolean) => {
     if (!studentId) {
       console.warn("Attempted to select student with null/undefined ID");
@@ -170,117 +169,153 @@ export default function SchoolClassroomDetailModal({
     }
   };
 
+  // const handleAddStudents = async () => {
+  //   if (!classroom?._id || !classroom?.term?._id) {
+  //     toast.error("Invalid classroom or term data");
+  //     return;
+  //   }
+
+  //   if (selectedStudentIds.length === 0) {
+  //     toast.error("No students selected");
+  //     return;
+  //   }
+
+  //   try {
+  //     // Update each student individually with the new classroom and term
+  //     for (const studentId of selectedStudentIds) {
+  //       if (!studentId) {
+  //         console.warn("Skipping null/undefined student ID");
+  //         continue;
+  //       }
+        
+  //       await API.put(`/students/${studentId}`, {
+  //         classroomId: classroom._id,
+  //         termId: classroom.term._id,
+  //         enrollments: [
+  //           {
+  //             termId: classroom.term._id,
+  //             classroomId: classroom._id,
+  //           },
+  //         ],
+  //       });
+  //     }
+
+  //     toast.success(`${selectedStudentIds.length} students added to classroom`);
+  //     fetchStudentsByClassroomAndTerm(classroom?._id || '', classroom?.term?._id || ''); // Refresh student list
+  //     handleStudentModalClose(); // Close the modal
+  //   } catch (error) {
+  //     console.error("Error adding students to classroom:", error);
+  //     toast.error("Failed to add students to classroom");
+  //   }
+  // };
   const handleAddStudents = async () => {
     if (!classroom?._id || !classroom?.term?._id) {
       toast.error("Invalid classroom or term data");
       return;
     }
-
+  
     if (selectedStudentIds.length === 0) {
       toast.error("No students selected");
       return;
     }
-
     try {
-      // Update each student individually with the new classroom and term
-      for (const studentId of selectedStudentIds) {
-        if (!studentId) {
-          console.warn("Skipping null/undefined student ID");
-          continue;
-        }
-        
-        await API.put(`/students/${studentId}`, {
-          classroomId: classroom._id,
-          termId: classroom.term._id,
-          enrollments: [
-            {
-              termId: classroom.term._id,
-              classroomId: classroom._id,
-            },
-          ],
-        });
-      }
-
+      await Promise.all(
+        selectedStudentIds.map((studentId) =>
+          API.put(`/students/${studentId}/classroom`, {
+            classroomId: classroom._id,
+            termId: classroom.term._id,
+          })
+        )
+      );
+  
       toast.success(`${selectedStudentIds.length} students added to classroom`);
-      fetchStudents(); // Refresh student list
-      handleStudentModalClose(); // Close the modal
+      fetchStudentsByClassroomAndTerm(classroom._id, classroom.term._id); // Refresh
+      handleStudentModalClose(); // Close modal
     } catch (error) {
-      console.error("Error adding students to classroom:", error);
+      // console.error("Error adding students to classroom:", error);
       toast.error("Failed to add students to classroom");
     }
   };
 
-  const getAvailableStudents = () => {
-    // Add null checks for students and classroom data
-    if (!students || !Array.isArray(students)) {
-      console.warn("Students data is not available or not an array");
-      return [];
-    }
-
-    if (!classroom?.studentIds || !Array.isArray(classroom.studentIds)) {
-      console.warn("Classroom studentIds is not available or not an array");
-      return students.filter(student => student && student._id); // Return all valid students
-    }
-
-    // Filter out students who are already in this classroom
-    return students.filter(student => 
-      student && 
-      student._id && 
-      !classroom.studentIds.includes(student._id)
-    );
-  };
-
-  const getEnrolledStudents = () => {
-    // Check if students array exists and is valid
-    if (!students || !Array.isArray(students)) {
-      console.warn("Students data is not available or not an array");
-      return [];
-    }
-
-    // Check if classroom.studentIds exists and is valid
-    if (!classroom?.studentIds || !Array.isArray(classroom.studentIds)) {
-      console.warn("Classroom studentIds is not available or not an array");
-      return [];
-    }
-
-    // Filter with null checks
-    return students.filter(student => 
-      student && 
-      student._id && 
-      classroom.studentIds.includes(student._id)
-    );
-  };
-
-  const getFilteredStudents = () => {
-    const availableStudents = getAvailableStudents();
+  // const getAvailableStudents = () => {
     
-    if (!searchTerm.trim()) {
-      return availableStudents;
-    }
+  //   if (!students || !Array.isArray(students)) {
+  //     console.warn("Students data is not available or not an array");
+  //     return [];
+  //   }
 
-    const searchLower = searchTerm.toLowerCase();
-    return availableStudents.filter(student => {
-      if (!student) return false;
+  //   if (!classroom?.studentIds || !Array.isArray(classroom.studentIds)) {
       
-      return (
-        (student.name && student.name.toLowerCase().includes(searchLower)) ||
-        (student.firstName && student.firstName.toLowerCase().includes(searchLower)) ||
-        (student.lastName && student.lastName.toLowerCase().includes(searchLower)) ||
-        (student.parentPhone && student.parentPhone.includes(searchTerm)) ||
-        (student.sex && student.sex.toLowerCase().includes(searchLower))
-      );
-    });
-  };
+  //     return students.filter(student => student && student._id); // Return all valid students
+  //   }
+
+  //   // Filter out students who are already in this classroom
+  //   return students.filter(student => 
+  //     student && 
+  //     student._id && 
+  //     !classroom.studentIds.includes(student._id)
+  //   );
+  // };
+
+  // const getEnrolledStudents = () => {
+  //   // Check if students array exists and is valid
+  //   if (!students || !Array.isArray(students)) {
+  //     console.warn("Students data is not available or not an array");
+  //     return [];
+  //   }
+
+  //   // Check if classroom.studentIds exists and is valid
+  //   if (!classroom?.studentIds || !Array.isArray(classroom.studentIds)) {
+      
+  //     return [];
+  //   }
+
+  //   // Filter with null checks
+  //   return students.filter(student => 
+  //     student && 
+  //     student._id && 
+  //     classroom.studentIds.includes(student._id)
+  //   );
+  // };
+
+  // const getFilteredStudents = () => {
+  //   const availableStudents = getAvailableStudents();
+    
+  //   if (!searchTerm.trim()) {
+  //     return availableStudents;
+  //   }
+
+  //   const searchLower = searchTerm.toLowerCase();
+  //   return availableStudents.filter(student => {
+  //     if (!student) return false;
+      
+  //     return (
+  //       (student.name && student.name.toLowerCase().includes(searchLower)) ||
+  //       (student.firstName && student.firstName.toLowerCase().includes(searchLower)) ||
+  //       (student.lastName && student.lastName.toLowerCase().includes(searchLower)) ||
+  //       (student.parentPhone && student.parentPhone.includes(searchTerm)) ||
+  //       (student.sex && student.sex.toLowerCase().includes(searchLower))
+  //     );
+  //   });
+  // };
 
   const handleStudentModalClose = () => {
     setIsStudentModalOpen(false);
     setSelectedStudentIds([]);
     setSearchTerm("");
   };
-  
+
+  useEffect(() => {
+ 
+    if (isOpen) {
+      
+      fetchStudentsByClassroomAndTerm(classroom?._id || '', classroom?.term?._id || '');
+    }
+  }, []);
+
   return (
     <Drawer open={isOpen} onOpenChange={onClose}>
-      <DrawerContent className="w-full h-[90vh]">
+      <DrawerContent className="">
         <DrawerHeader className="border-b">
           <DrawerTitle className="flex items-center gap-2">
             <School className="h-5 w-5" />
@@ -311,7 +346,7 @@ export default function SchoolClassroomDetailModal({
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            Students ({getEnrolledStudents().length})
+            Students ({studentsByClassroom.length})
           </button>
         </div>
 
@@ -363,7 +398,7 @@ export default function SchoolClassroomDetailModal({
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900">Student Enrollment</h3>
                       <p className="text-sm text-gray-600">
-                        {getEnrolledStudents().length} students currently enrolled
+                        {studentsByClassroom.length} students currently enrolled
                       </p>
                     </div>
                   </div>
@@ -403,7 +438,7 @@ export default function SchoolClassroomDetailModal({
                 <div>
                   <h3 className="text-lg font-semibold">Enrolled Students</h3>
                   <p className="text-sm text-gray-600">
-                    {getEnrolledStudents().length} students in this classroom
+                    {studentsByClassroom.length} students in this classroom
                   </p>
                 </div>
                 <Button 
@@ -421,7 +456,7 @@ export default function SchoolClassroomDetailModal({
                   <div className="p-8 text-center">
                     <p className="text-gray-500">Loading students...</p>
                   </div>
-                ) : getEnrolledStudents().length === 0 ? (
+                ) : studentsByClassroom.length === 0 ? (
                   <div className="p-8 text-center">
                     <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500 mb-4">No students enrolled yet</p>
@@ -447,7 +482,7 @@ export default function SchoolClassroomDetailModal({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {getEnrolledStudents().map((student, index) => {
+                      {studentsByClassroom.map((student, index) => {
                         if (!student || !student._id) {
                           console.warn("Found null/undefined student in enrolled students");
                           return null;
@@ -539,6 +574,9 @@ export default function SchoolClassroomDetailModal({
       {/* Student Selection Modal */}
       <Dialog open={isStudentModalOpen} onOpenChange={handleStudentModalClose}>
         <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogDescription>
+            Add students to {classroom?.name || 'Classroom'}
+          </DialogDescription>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
@@ -560,7 +598,7 @@ export default function SchoolClassroomDetailModal({
             </div>
             {searchTerm && (
               <p className="text-sm text-gray-500 mt-2">
-                Found {getFilteredStudents().length} students matching "{searchTerm}"
+                Found {allStudents?.length} students matching "{searchTerm}"
               </p>
             )}
           </div>
@@ -570,7 +608,7 @@ export default function SchoolClassroomDetailModal({
               <p className="text-center py-4">Loading students...</p>
             ) : (
               <div className="space-y-2">
-                {getFilteredStudents().length === 0 ? (
+                {allStudents?.length === 0 ? (
                   <div className="text-center py-8">
                     {searchTerm ? (
                       <div>
@@ -588,12 +626,11 @@ export default function SchoolClassroomDetailModal({
                     )}
                   </div>
                 ) : (
-                  getFilteredStudents().map((student) => {
+                  allStudents?.map((student) => {
                     if (!student || !student._id) {
                       console.warn("Found null/undefined student in filtered students");
                       return null;
                     }
-                    
                     return (
                       <div key={student._id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50">
                         <Checkbox

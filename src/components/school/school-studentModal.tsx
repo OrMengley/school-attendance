@@ -1,4 +1,6 @@
 import {useEffect, useState} from "react";
+import {storage} from "../../firebase";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import {format} from "date-fns";
 import {ChevronDownIcon} from "lucide-react";
 import {
@@ -24,6 +26,7 @@ import API from "../../lib/axios";
 import {toast} from "sonner";
 
 import React from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 
 export interface Enrollment {
@@ -95,6 +98,54 @@ interface CreateStudentModalProps {
 }
 
 export default function CreateStudentModal({isOpen, onClose, initialData, onSuccess} : CreateStudentModalProps) {
+
+
+    // vairable for upload image
+    const [image, setImage] = useState<File | null>(null);
+    const [url, setUrl] = useState<string>("");
+    const [uploading, setUploading] = useState<boolean>(false);
+    const [error, setError] = useState<string>("");
+    const [uploadProgress, setUploadProgress] = useState<number>(0);
+
+    // Handle image pick and auto-upload
+    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setImage(file);
+            setError("");
+            setUploading(true);
+            setUploadProgress(0);
+            try {
+                const folderPath = `students/profile/${file.name}`;
+                const storageRef = ref(storage, folderPath);
+                // Upload with progress
+                const uploadTask = uploadBytesResumable(storageRef, file);
+                uploadTask.on(
+                  "state_changed",
+                  (snapshot) => {
+                    const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                    setUploadProgress(percent);
+                  },
+                  (err) => {
+                    setError("Failed to upload image: " + err.message);
+                    setUploading(false);
+                  },
+                  async () => {
+                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                    setUrl(downloadURL);
+                    setProfileUrl(downloadURL);
+                    setUploading(false);
+                    setUploadProgress(100);
+                  }
+                );
+            } catch (err: any) {
+                setError("Failed to upload image: " + err.message);
+                setUploading(false);
+            }
+        }
+    };
+
+
     const [firstName, setFirstName] = useState(initialData ?. firstName || "");
     const [lastName, setLastName] = useState(initialData ?. lastName || "");
     const [fullName, setFullName] = useState(initialData ?. name || "");
@@ -241,6 +292,29 @@ export default function CreateStudentModal({isOpen, onClose, initialData, onSucc
                 </DialogHeader>
                 <form onSubmit={handleSubmit}
                     className="space-y-4">
+                    {/* Avatar and Image Picker */}
+                    <div className="flex items-center space-x-4">
+                        <Avatar className="h-20 w-20 ring-2 ring-blue-200">
+                            <AvatarImage src={profileUrl || url} alt={fullName || "Student"} />
+                            <AvatarFallback>{(firstName?.[0] || "").toUpperCase()}{(lastName?.[0] || "").toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageChange}
+                                disabled={uploading}
+                                className="block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                            />
+                            {uploading && (
+                                <div className="text-xs text-blue-600 mt-1">Uploading: {uploadProgress}%</div>
+                            )}
+                            {!uploading && uploadProgress === 100 && (
+                                <div className="text-xs text-green-600 mt-1">Upload complete!</div>
+                            )}
+                            {error && <div className="text-xs text-red-600 mt-1">{error}</div>}
+                        </div>
+                    </div>
                     {/* Name Fields */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -339,16 +413,7 @@ export default function CreateStudentModal({isOpen, onClose, initialData, onSucc
                             required/>
                     </div>
 
-                    {/* Profile Image URL */}
-                    <div>
-                        <label className="text-sm font-medium">រូបថតសិស្ស</label>
-                        <Input placeholder="https://example.com/image.jpg"
-                            value={profileUrl}
-                            onChange={
-                                (e) => setProfileUrl(e.target.value)
-                            }
-                            className="mt-1"/>
-                    </div>
+                    {/* Profile Image URL - removed manual input */}
 
                     {/* Term and Classroom Selection */}
                     <div className="grid grid-cols-2 gap-4">

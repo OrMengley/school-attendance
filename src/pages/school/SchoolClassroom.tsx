@@ -2,11 +2,11 @@ import DataTable from "../../components/school/data-table";
 import useFetchData from "../../hooks/useFetchData";
 import SchoolCreateClassroomModal from "../../components/school/school-classroomModal";
 import SchoolClassroomDetailModal from "../../components/school/school-classroom-detail-modal";
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 
 import { Button } from "../../components/ui/button";
 import { Edit, Eye, Plus } from "lucide-react";
-import API from "../../lib/axios";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 
 interface SessionType {
@@ -48,7 +48,7 @@ interface ClassroomType {
 export default function SchoolClassroom() {
 
   const { data: classrooms, loading, refetch } = useFetchData<ClassroomType>("/classrooms");
-  const { data: terms, loading: termsLoading, refetch: termsRefetch } = useFetchData<TermType>("/terms");
+  const { data: terms, loading: termsLoading, } = useFetchData<TermType>("/terms");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -66,6 +66,7 @@ export default function SchoolClassroom() {
     setSelectedClassroom(classroom);
     setIsModalOpen(true);
   }
+
   const handleOpenDetail = (classroom: ClassroomType) => {
     setSelectedClassroom(classroom);
     setIsDetailModalOpen(true);
@@ -150,7 +151,10 @@ export default function SchoolClassroom() {
       
       <SchoolClassroomDetailModal
         isOpen={isDetailModalOpen}
-        onClose={() => setIsDetailModalOpen(false)}
+        onClose={() => {
+          setIsDetailModalOpen(false);
+          setSelectedClassroom(null);
+        }}
         classroom={selectedClassroom || null}
       />
     </div>
