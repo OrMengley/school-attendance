@@ -14,9 +14,6 @@ import { Separator } from "../ui/separator";
 import { Calendar, MapPin, Phone, User, CalendarDays, Building, GraduationCap } from "lucide-react";
 
 
-
-
-
 interface TermType {
   _id: string;
   year: string;
@@ -138,10 +135,11 @@ export default function StudentDetailModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-xl border-0">
+        <DialogTitle>Student Details</DialogTitle>
         <DialogHeader>
           <div className="flex items-center space-x-4 pb-4 border-b border-gray-200">
-            <Avatar className="h-16 w-16 ring-2 ring-blue-100 shadow">
-              <AvatarImage src={student.profileUrl} alt={student.name} />
+            <Avatar className="h-28 w-28 ring-2 ring-blue-100 shadow">
+              <AvatarImage className="object-cover" src={student.profileUrl} alt={student.name} />
               <AvatarFallback className="text-xl bg-gray-100 text-gray-700">
                 {student.name}
               </AvatarFallback>
@@ -168,28 +166,37 @@ export default function StudentDetailModal({
           <div className="rounded-lg p-0">
             <h3 className="text-lg font-semibold flex items-center text-blue-700 mb-4">
               <User className="h-5 w-5 mr-2 text-blue-400" />
-              Personal Information
+              ពត៍មានសិស្ស
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-500">First Name (ត្រកូល)</label>
+                <label className="text-sm font-medium text-gray-500">ត្រកូល (First Name)</label>
                 <p className="text-base text-gray-800">{student.firstName || "Not specified"}</p>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-500">Last Name (ឈ្មោះ)</label>
+                <label className="text-sm font-medium text-gray-500">ឈ្មោះ (Last Name)</label>
                 <p className="text-base text-gray-800">{student.lastName || "Not specified"}</p>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-500 flex items-center">
                   <CalendarDays className="h-4 w-4 mr-1 text-blue-300" />
-                  Date of Birth (ថ្ងៃខែឆ្នាំកំណើត)
+                   ថ្ងៃខែឆ្នាំកំណើត (Date of Birth)
                 </label>
                 <p className="text-base text-gray-800">{student.dob ? format(new Date(student.dob), "PPP") : "Not specified"}</p>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-500 flex items-center">
+                  <CalendarDays className="h-4 w-4 mr-1 text-blue-300" />
+                   ភេទ (Gender)
+                </label>
+                <p className="text-base text-gray-800">
+                  {student.sex ? (student.sex === "female" ? "ស្រី" : student.sex === "male" ? "ប្រុស" : student.sex) : "Not specified"}
+                </p>
               </div>
               <div className="space-y-2 md:col-span-2">
                 <label className="text-sm font-medium text-gray-500 flex items-center">
                   <MapPin className="h-4 w-4 mr-1 text-blue-300" />
-                  Address (អាសយដ្ឋាន)
+                   អាសយដ្ឋាន (Address)
                 </label>
                 <p className="text-base text-gray-800">{student.address || "Not specified"}</p>
               </div>
@@ -200,10 +207,10 @@ export default function StudentDetailModal({
           <div className="rounded-lg p-0">
             <h3 className="text-lg font-semibold flex items-center text-blue-700 mb-4">
               <Phone className="h-5 w-5 mr-2 text-blue-400" />
-              Contact Information
+              ព៍ត៍មានអាណាព្យាបាល
             </h3>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-500">Parent Phone (លេខទូរស័ព្ទអាណាព្យាបាល)</label>
+              <label className="text-sm font-medium text-gray-500"> លេខទូរស័ព្ទអាណាព្យាបាល (Parent Phone)</label>
               <p className="text-base text-gray-800">{student.parentPhone}</p>
             </div>
           </div>
@@ -212,13 +219,13 @@ export default function StudentDetailModal({
           <div className="rounded-lg p-0">
             <h3 className="text-lg font-semibold flex items-center text-blue-700 mb-4">
               <GraduationCap className="h-5 w-5 mr-2 text-blue-400" />
-              Academic Information
+              ពត៍មានសិក្សា
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-500 flex items-center">
                   <Building className="h-4 w-4 mr-1 text-blue-300" />
-                  Classroom (បន្ទប់សិក្សា)
+                   បន្ទប់សិក្សា (Classroom)
                 </label>
                 <p className="text-base text-gray-800">
                   {student.classroom?.name || "Not assigned"}
@@ -230,7 +237,7 @@ export default function StudentDetailModal({
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-500 flex items-center">
                   <Calendar className="h-4 w-4 mr-1 text-blue-300" />
-                  Academic Term (ឆ្នាំសិក្សា)
+                   ឆ្នាំសិក្សា (Academic Term)
                 </label>
                 <p className="text-base text-gray-800">
                   {student.term?.year || "Not assigned"}
@@ -243,11 +250,11 @@ export default function StudentDetailModal({
           <div className="rounded-lg p-0">
             <h3 className="text-lg font-semibold flex items-center text-blue-700 mb-4">
               <Calendar className="h-5 w-5 mr-2 text-blue-400" />
-              System Information
+              ពត៍មានប្រព័ន្ធ
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-500">Enrollment</label>
+                <label className="text-sm font-medium text-gray-500">ធ្លាប់សិក្សា</label>
                 <p className="text-base text-gray-800">
                   {student.enrollments && student.enrollments.length > 0 
                     ? `${student.enrollments.length} enrollment(s)` 

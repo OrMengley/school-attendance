@@ -70,12 +70,13 @@ const data = {
                     title: "Classroom",
                     url: "/school/classroom"
                 }, {
-                    title: "Users",
-                    url: "/school/user"
-                }, {
                     title: "Students",
                     url: "/school/student"
                 },
+                {
+                    title: "Users",
+                    url: "/school/user"
+                }, 
             ]
         }, 
         
