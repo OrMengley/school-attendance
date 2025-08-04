@@ -11,12 +11,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 
 interface SessionType {
   _id: string;
-  subjecName: string;
+  subjectName: string;
   teacherId: string;
-  sessionHourStart:string;
-  sessionMinStart:string;
-  sessionHourEnd:string;
-  sessionMinEnd:string;
+  sessionStartHour:string;
+  sessionStartMin:string;
+  sessionEndHour:string;
+  sessionEndMin:string;
 }
 interface TermType {
   _id: string;
@@ -148,6 +148,7 @@ export default function SchoolClassroom() {
         initialData={selectedClassroom}
         onSuccess={refetch}
       />
+      
       
       <SchoolClassroomDetailModal
         isOpen={isDetailModalOpen}

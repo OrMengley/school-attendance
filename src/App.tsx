@@ -18,13 +18,16 @@ import {UserProvider} from "./context/UserContext";
 import React from "react";
 import RequireAuth from "./components/RequireAuth";
 import UserTable from "./pages/Users";
-import { Toaster } from "sonner";
+import {Toaster} from "sonner";
 import SchoolUserTrash from "./pages/school/SchoolUserTrash";
 import SchoolClassroomTrash from "./pages/school/SchoolClassroomTrash";
 import SchoolDepartmentTrash from "./pages/school/SchoolDepartmentTrash";
 import SchoolGradeTrash from "./pages/school/SchoolGradeTrash";
 import SchoolStudentTrash from "./pages/school/SchoolStudentTrash";
 import SchoolTermTrash from "./pages/school/SchoolTermTrash";
+import TeacherDashboard from "./pages/teacher/TeacherDashboard";
+import TeacherClassroomAttendance from "./pages/teacher/TeacherClassroomAttendance";
+import TeacherProfile from "./pages/teacher/TeacherProfile";
 
 function App() {
     return (
@@ -32,7 +35,7 @@ function App() {
             <React.StrictMode>
                 <UserProvider>
                     <Router>
-                        <Toaster position="top-right" />
+                        <Toaster position="top-right"/>
                         <Routes>
                             <Route path="/login"
                                 element={<Login/>}/>
@@ -41,11 +44,19 @@ function App() {
                                     <RequireAuth
                                 role="parent"><ParentLayout/></RequireAuth>
                             }></Route>
+
+                            {/* route for teacher */}
                             <Route path="/teacher"
                                 element={
                                     <RequireAuth
                                 role="teacher"><TeacherLayout/></RequireAuth>
-                            }></Route>
+                            }>
+                                <Route path="/teacher" element={<TeacherDashboard />} />
+                                <Route path="/teacher/classrooms/:id" element={<TeacherClassroomAttendance />} />
+                                <Route path="/teacher/profile" element={<TeacherProfile />} />
+                            </Route>
+
+                            {/* route for school */}
                             <Route path="/school"
                                 element={
                                     <RequireAuth
@@ -84,13 +95,20 @@ function App() {
                                     <RequireAuth
                                 role="super_admin"><Home/></RequireAuth>
                             }>
-                              <Route path="/view/user" element={<UserTable/>} />
-                              <Route path="/view/classroom" element={<UserTable/>} />
-                              <Route path="/view/school" element={<UserTable/>} />
-                              <Route path="/view/dashboard" element={<UserTable/>} />
-                              <Route path="/creator/user" element={<UserTable/>} />
-                              <Route path="/creator/classroom" element={<UserTable/>} />
-                              <Route path="/creator/school" element={<UserTable/>} />
+                                <Route path="/view/user"
+                                    element={<UserTable/>}/>
+                                <Route path="/view/classroom"
+                                    element={<UserTable/>}/>
+                                <Route path="/view/school"
+                                    element={<UserTable/>}/>
+                                <Route path="/view/dashboard"
+                                    element={<UserTable/>}/>
+                                <Route path="/creator/user"
+                                    element={<UserTable/>}/>
+                                <Route path="/creator/classroom"
+                                    element={<UserTable/>}/>
+                                <Route path="/creator/school"
+                                    element={<UserTable/>}/>
                             </Route>
                             <Route path="/unauthorized"
                                 element={

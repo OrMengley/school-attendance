@@ -1,22 +1,17 @@
 import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerFooter,
-  DrawerDescription,
-} from "../../components/ui/drawer";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
   DialogDescription,
+  DialogClose,
+  DialogTrigger,
 } from "../../components/ui/dialog";
 import { Button } from "../../components/ui/button";
 
-import { Calendar, GraduationCap, School, Clock, Hash, Users, Plus, Search, User, Phone, UserCheck, UserX } from "lucide-react";
+
+import { Calendar, GraduationCap, School, Clock, Hash, Users, Plus, Search, User, Phone, UserCheck, UserX, BookOpen, User as UserIcon, Trash } from "lucide-react";
 import { useEffect, useState } from "react";
 import API from "../../lib/axios";
 import { toast } from "sonner";
@@ -32,6 +27,8 @@ import {
   TableRow,
 } from "../../components/ui/table";
 import useFetchData from "../../hooks/useFetchData";
+import SchoolClassroomSessionModal from "./school-classroomSessionModal";
+
 
 
 export interface Enrollment {
@@ -74,16 +71,26 @@ interface GradeType {
   term: TermType;
 }
 
+interface TeacherType {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  schoolId?: string;
+  classroomIds?: string[];
+}
 
 export interface SessionType {
   _id: string;
-  subjecName: string;
+  subjectName: string;
   teacherId: string;
-  sessionHourStart:string;
-  sessionMinStart:string;
-  sessionHourEnd:string;
-  sessionMinEnd:string;
+  sessionStartHour: string;
+  sessionStartMin: string;
+  sessionEndHour: string;
+  sessionEndMin: string;
+  sessionDay?: string; // Add sessionDay field
 }
+
 interface ClassroomType {
   _id: string;
   name: string;
@@ -92,9 +99,8 @@ interface ClassroomType {
   createdAt: string;
   grade: GradeType;
   term: TermType;
-  studentIds:string[];
+  studentIds: string[];
   sessions: SessionType[];
-  
 }
 
 interface ClassroomDetailModalProps {
@@ -103,19 +109,27 @@ interface ClassroomDetailModalProps {
   classroom: ClassroomType | null;
 }
 
+const DAYS_OF_WEEK = [
+  "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+];
+
 export default function SchoolClassroomDetailModal({
   isOpen,
   onClose,
   classroom,
 }: ClassroomDetailModalProps) {
   if (!classroom) return null;
-  const { data: allStudents} = useFetchData<StudentType>("/students");
+  const { data: allStudents } = useFetchData<StudentType>("/students");
+  const { data: teachers } = useFetchData<TeacherType>("/users?role=teacher");
   const [studentsByClassroom, setStudentsByClassroom] = useState<StudentType[]>([]);
   const [loading, setLoading] = useState(true);
   const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState<'details' | 'students'>('details');
+  const [openModalCreateSession, setOpenModalCreateSession] = useState(false);
+  const [openModalDeleteSession, setOpenModalDeleteSession] = useState(false);
+  const [sessionDeleteByID, setSessionDeleteByID] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'details' | 'students' | 'schedule'>('details');
 
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
@@ -133,14 +147,58 @@ export default function SchoolClassroomDetailModal({
     }
   };
 
+  // Function to get teacher name by ID
+  const getTeacherName = (teacherId: string) => {
+    const teacher = teachers?.find(t => t.id === teacherId);
+    return teacher?.name || 'Unknown Teacher';
+  };
+
+  // Function to format time
+  const formatTime = (hour: string, minute: string) => {
+    const hourNum = parseInt(hour);
+    const minuteNum = parseInt(minute);
+    if (isNaN(hourNum) || isNaN(minuteNum)) return 'Invalid Time';
+
+    const time = new Date();
+    time.setHours(hourNum, minuteNum, 0);
+    return time.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
+  // Function to organize sessions by day
+  const getSessionsByDay = () => {
+    const sessionsByDay: Record<string, SessionType[]> = {};
+
+    // Initialize all days with empty arrays
+    DAYS_OF_WEEK.forEach(day => {
+      sessionsByDay[day] = [];
+    });
+
+    // Group sessions by day
+
+    if (classroom?.sessions && Array.isArray(classroom.sessions)) {
+      // if (sessions && Array.isArray(sessions)) {
+      classroom.sessions.forEach(session => {
+        if (session.sessionDay && sessionsByDay[session.sessionDay]) {
+          sessionsByDay[session.sessionDay].push(session);
+        }
+      });
+    }
+
+    return sessionsByDay;
+  };
+
   const fetchStudentsByClassroomAndTerm = async (classroomId: string, termId: string) => {
     try {
       setLoading(true);
-      const response =  await API.get(`/students/classroom/${classroomId}/term/${termId}`);
+      const response = await API.get(`/students/classroom/${classroomId}/term/${termId}`);
       // Add null check for response data
       if (response.data && Array.isArray(response.data)) {
         setStudentsByClassroom(response.data);
-        
+
       } else {
         // console.warn("Invalid students data received:", response.data);
         setStudentsByClassroom([]);
@@ -155,65 +213,35 @@ export default function SchoolClassroomDetailModal({
     }
   };
 
- 
+
   const handleStudentSelection = (studentId: string, isChecked: boolean) => {
     if (!studentId) {
       console.warn("Attempted to select student with null/undefined ID");
       return;
     }
-    
+
     if (isChecked) {
       setSelectedStudentIds(prev => [...prev, studentId]);
     } else {
       setSelectedStudentIds(prev => prev.filter(id => id !== studentId));
     }
   };
+  const handleDeleteSession = async () => {
+    try {
+      await API.delete(`/classrooms/${classroom._id}/sessions/${sessionDeleteByID}`);
+      toast.success("Session deleted successfully");
+      setOpenModalDeleteSession(false);
+    } catch (error) {
+      console.error("Error deleting session:", error);
+    }
+  };
 
-  // const handleAddStudents = async () => {
-  //   if (!classroom?._id || !classroom?.term?._id) {
-  //     toast.error("Invalid classroom or term data");
-  //     return;
-  //   }
-
-  //   if (selectedStudentIds.length === 0) {
-  //     toast.error("No students selected");
-  //     return;
-  //   }
-
-  //   try {
-  //     // Update each student individually with the new classroom and term
-  //     for (const studentId of selectedStudentIds) {
-  //       if (!studentId) {
-  //         console.warn("Skipping null/undefined student ID");
-  //         continue;
-  //       }
-        
-  //       await API.put(`/students/${studentId}`, {
-  //         classroomId: classroom._id,
-  //         termId: classroom.term._id,
-  //         enrollments: [
-  //           {
-  //             termId: classroom.term._id,
-  //             classroomId: classroom._id,
-  //           },
-  //         ],
-  //       });
-  //     }
-
-  //     toast.success(`${selectedStudentIds.length} students added to classroom`);
-  //     fetchStudentsByClassroomAndTerm(classroom?._id || '', classroom?.term?._id || ''); // Refresh student list
-  //     handleStudentModalClose(); // Close the modal
-  //   } catch (error) {
-  //     console.error("Error adding students to classroom:", error);
-  //     toast.error("Failed to add students to classroom");
-  //   }
-  // };
   const handleAddStudents = async () => {
     if (!classroom?._id || !classroom?.term?._id) {
       toast.error("Invalid classroom or term data");
       return;
     }
-  
+
     if (selectedStudentIds.length === 0) {
       toast.error("No students selected");
       return;
@@ -227,7 +255,7 @@ export default function SchoolClassroomDetailModal({
           })
         )
       );
-  
+
       toast.success(`${selectedStudentIds.length} students added to classroom`);
       fetchStudentsByClassroomAndTerm(classroom._id, classroom.term._id); // Refresh
       handleStudentModalClose(); // Close modal
@@ -237,67 +265,8 @@ export default function SchoolClassroomDetailModal({
     }
   };
 
-  // const getAvailableStudents = () => {
-    
-  //   if (!students || !Array.isArray(students)) {
-  //     console.warn("Students data is not available or not an array");
-  //     return [];
-  //   }
 
-  //   if (!classroom?.studentIds || !Array.isArray(classroom.studentIds)) {
-      
-  //     return students.filter(student => student && student._id); // Return all valid students
-  //   }
 
-  //   // Filter out students who are already in this classroom
-  //   return students.filter(student => 
-  //     student && 
-  //     student._id && 
-  //     !classroom.studentIds.includes(student._id)
-  //   );
-  // };
-
-  // const getEnrolledStudents = () => {
-  //   // Check if students array exists and is valid
-  //   if (!students || !Array.isArray(students)) {
-  //     console.warn("Students data is not available or not an array");
-  //     return [];
-  //   }
-
-  //   // Check if classroom.studentIds exists and is valid
-  //   if (!classroom?.studentIds || !Array.isArray(classroom.studentIds)) {
-      
-  //     return [];
-  //   }
-
-  //   // Filter with null checks
-  //   return students.filter(student => 
-  //     student && 
-  //     student._id && 
-  //     classroom.studentIds.includes(student._id)
-  //   );
-  // };
-
-  // const getFilteredStudents = () => {
-  //   const availableStudents = getAvailableStudents();
-    
-  //   if (!searchTerm.trim()) {
-  //     return availableStudents;
-  //   }
-
-  //   const searchLower = searchTerm.toLowerCase();
-  //   return availableStudents.filter(student => {
-  //     if (!student) return false;
-      
-  //     return (
-  //       (student.name && student.name.toLowerCase().includes(searchLower)) ||
-  //       (student.firstName && student.firstName.toLowerCase().includes(searchLower)) ||
-  //       (student.lastName && student.lastName.toLowerCase().includes(searchLower)) ||
-  //       (student.parentPhone && student.parentPhone.includes(searchTerm)) ||
-  //       (student.sex && student.sex.toLowerCase().includes(searchLower))
-  //     );
-  //   });
-  // };
 
   const handleStudentModalClose = () => {
     setIsStudentModalOpen(false);
@@ -306,55 +275,63 @@ export default function SchoolClassroomDetailModal({
   };
 
   useEffect(() => {
- 
+
     if (isOpen) {
-      
+
       fetchStudentsByClassroomAndTerm(classroom?._id || '', classroom?.term?._id || '');
+
     }
-  }, []);
+  }, [isOpen, classroom]);
 
   return (
-    <Drawer open={isOpen} onOpenChange={onClose}>
-      <DrawerContent className="">
-        <DrawerHeader className="border-b">
-          <DrawerTitle className="flex items-center gap-2">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="2xl:max-w-6xl xl:max-w-5xl lg:max-w-4xl md:max-w-3xl sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
             <School className="h-5 w-5" />
             {classroom?.name || 'Unknown Classroom'} - Classroom Management
-          </DrawerTitle>
-          <DrawerDescription>
+          </DialogTitle>
+          <DialogDescription>
             Manage classroom details and student enrollment
-          </DrawerDescription>
-        </DrawerHeader>
-        
+          </DialogDescription>
+        </DialogHeader>
+
         {/* Tab Navigation */}
         <div className="flex border-b">
           <button
             onClick={() => setActiveTab('details')}
-            className={`px-6 py-3 text-sm font-medium transition-colors ${
-              activeTab === 'details'
-                ? 'border-b-2 border-blue-500 text-blue-600'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
+            className={`px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'details'
+              ? 'border-b-2 border-blue-500 text-blue-600'
+              : 'text-gray-500 hover:text-gray-700'
+              }`}
           >
             Classroom Details
           </button>
           <button
             onClick={() => setActiveTab('students')}
-            className={`px-6 py-3 text-sm font-medium transition-colors ${
-              activeTab === 'students'
-                ? 'border-b-2 border-blue-500 text-blue-600'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
+            className={`px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'students'
+              ? 'border-b-2 border-blue-500 text-blue-600'
+              : 'text-gray-500 hover:text-gray-700'
+              }`}
           >
             Students ({studentsByClassroom.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('schedule')}
+            className={`px-6 py-3 text-sm font-medium transition-colors ${activeTab === 'schedule'
+              ? 'border-b-2 border-blue-500 text-blue-600'
+              : 'text-gray-500 hover:text-gray-700'
+              }`}
+          >
+            Weekly Schedule
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
-          {activeTab === 'details' ? (
+          {activeTab === 'details' && (
             <div className="space-y-6">
               {/* Classroom Information Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
                 <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
                   <Hash className="h-5 w-5 text-gray-600" />
                   <div>
@@ -402,7 +379,7 @@ export default function SchoolClassroomDetailModal({
                       </p>
                     </div>
                   </div>
-                  <Button 
+                  <Button
                     onClick={() => setIsStudentModalOpen(true)}
                     className="bg-indigo-600 hover:bg-indigo-700"
                   >
@@ -411,27 +388,10 @@ export default function SchoolClassroomDetailModal({
                   </Button>
                 </div>
               </div>
-
-              {/* Sessions Information */}
-              {classroom?.sessions && classroom.sessions.length > 0 && (
-                <div className="bg-white rounded-lg border p-6">
-                  <h3 className="text-lg font-semibold mb-4">Class Sessions</h3>
-                  <div className="space-y-3">
-                    {classroom.sessions.map((session, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div>
-                          <p className="text-sm text-gray-600">Teacher ID: {session?.teacherId || 'Unknown'}</p>
-                        </div>
-                        <div className="text-right">
-                          {/* <p className="text-sm font-medium">{session.sessionStart} - {session.sessionEnd}</p> */}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
-          ) : (
+          )}
+
+          {activeTab === 'students' && (
             <div className="space-y-4">
               {/* Students Table Header */}
               <div className="flex items-center justify-between">
@@ -441,7 +401,7 @@ export default function SchoolClassroomDetailModal({
                     {studentsByClassroom.length} students in this classroom
                   </p>
                 </div>
-                <Button 
+                <Button
                   onClick={() => setIsStudentModalOpen(true)}
                   className="bg-indigo-600 hover:bg-indigo-700"
                 >
@@ -460,7 +420,7 @@ export default function SchoolClassroomDetailModal({
                   <div className="p-8 text-center">
                     <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500 mb-4">No students enrolled yet</p>
-                    <Button 
+                    <Button
                       onClick={() => setIsStudentModalOpen(true)}
                       className="bg-indigo-600 hover:bg-indigo-700"
                     >
@@ -487,15 +447,15 @@ export default function SchoolClassroomDetailModal({
                           console.warn("Found null/undefined student in enrolled students");
                           return null;
                         }
-                        
+
                         return (
                           <TableRow key={student._id}>
                             <TableCell className="font-medium">{index + 1}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-3">
                                 {student.profileUrl ? (
-                                  <img 
-                                    src={student.profileUrl} 
+                                  <img
+                                    src={student.profileUrl}
                                     alt={student.name || 'Student'}
                                     className="h-8 w-8 rounded-full object-cover"
                                   />
@@ -529,7 +489,7 @@ export default function SchoolClassroomDetailModal({
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Badge 
+                              <Badge
                                 variant={student.status === 'active' ? 'default' : 'destructive'}
                                 className="flex items-center gap-1 w-fit"
                               >
@@ -542,8 +502,8 @@ export default function SchoolClassroomDetailModal({
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="outline"
                                 size="sm"
                                 onClick={() => {
                                   // Add logic to remove student from classroom
@@ -562,15 +522,125 @@ export default function SchoolClassroomDetailModal({
               </div>
             </div>
           )}
+
+          {activeTab === 'schedule' && (
+            <div className="space-y-6">
+              {/* Weekly Schedule */}
+              <div className="bg-white rounded-lg border p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <BookOpen className="h-5 w-5" />
+                    Weekly Class Schedule
+                  </h3>
+                  <Button
+                    onClick={() => setOpenModalCreateSession(true)}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Manage Sessions
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {DAYS_OF_WEEK.map((day) => {
+                    const sessionsForDay = getSessionsByDay()[day] || [];
+                    return (
+                      <div key={day} className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="font-semibold text-gray-800">{day}</h4>
+                          <Badge variant={sessionsForDay.length > 0 ? "default" : "secondary"}>
+                            {sessionsForDay.length} session{sessionsForDay.length !== 1 ? 's' : ''}
+                          </Badge>
+                        </div>
+
+                        {sessionsForDay.length === 0 ? (
+                          <div className="text-center py-6 items-center">
+                            <Clock className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                            <p className="text-sm text-gray-500">No sessions scheduled</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2 max-h-64 overflow-y-auto">
+                            {sessionsForDay.map((session, index) => (
+
+
+                              <div key={session._id || index} className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 border-l-4 border-blue-500 hover:shadow-sm transition-shadow">
+                                <div className="space-y-2">
+
+                                  <div className="flex items-center gap-2">
+                                    <BookOpen className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                                    <span className="font-medium text-gray-900 text-sm truncate">{session.subjectName}</span>
+                                  </div>
+
+                                  <div className="flex items-center gap-2">
+                                    <UserIcon className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                                    <span className="text-sm text-gray-700 truncate">{getTeacherName(session.teacherId)}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                                    <span className="text-sm font-medium text-gray-800">
+                                      {formatTime(session.sessionStartHour, session.sessionStartMin)} - {formatTime(session.sessionEndHour, session.sessionEndMin)}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex justify-end">
+                                    <Badge variant="outline" className="text-xs">
+                                      Session {index + 1}
+                                    </Badge>
+
+
+                                    <Button variant="outline" size="icon" className="bg-red-300 text-white hover:bg-red-500 hover:text-white" onClick={() => {
+                                      setSessionDeleteByID(session._id);
+                                      setOpenModalDeleteSession(true);
+                                    }}>
+                                      <Trash className="h-4 w-4" />
+
+                                    </Button>
+
+                                  </div>
+                                </div>
+                              </div>
+
+
+                            ))}
+                            <div>
+                            </div>
+                          </div>
+                        )}
+
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+            </div>
+          )}
+
         </div>
-        
-        <DrawerFooter className="border-t">
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
-        </DrawerFooter>
-      </DrawerContent>
-      
+
+
+        <Dialog open={openModalDeleteSession} onOpenChange={setOpenModalDeleteSession}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>តើអ្នកច្បាស់ទេថានឹងត្រូវលុបកាលវិភាគ</DialogTitle>
+              <DialogDescription>
+                Are your sure want to delete?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline" onClick={() => setOpenModalDeleteSession(false)}>អ់តទេ</Button>
+              </DialogClose>
+              <Button type="submit" onClick={async() => { handleDeleteSession(); setOpenModalDeleteSession(false); }}> លុប</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+
+
+       
+      </DialogContent>
       {/* Student Selection Modal */}
       <Dialog open={isStudentModalOpen} onOpenChange={handleStudentModalClose}>
         <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
@@ -583,7 +653,7 @@ export default function SchoolClassroomDetailModal({
               Add Students to {classroom?.name || 'Classroom'}
             </DialogTitle>
           </DialogHeader>
-          
+
           {/* Search Input */}
           <div className="px-6 pb-4">
             <div className="relative">
@@ -602,7 +672,7 @@ export default function SchoolClassroomDetailModal({
               </p>
             )}
           </div>
-          
+
           <div className="flex-1 overflow-y-auto px-6">
             {loading ? (
               <p className="text-center py-4">Loading students...</p>
@@ -613,8 +683,8 @@ export default function SchoolClassroomDetailModal({
                     {searchTerm ? (
                       <div>
                         <p className="text-gray-500">No students found matching "{searchTerm}"</p>
-                        <Button 
-                          variant="link" 
+                        <Button
+                          variant="link"
                           onClick={() => setSearchTerm("")}
                           className="mt-2"
                         >
@@ -639,8 +709,8 @@ export default function SchoolClassroomDetailModal({
                           onCheckedChange={(checked) => handleStudentSelection(student._id, checked as boolean)}
                         />
                         {student.profileUrl ? (
-                          <img 
-                            src={student.profileUrl} 
+                          <img
+                            src={student.profileUrl}
                             alt={student.name || 'Student'}
                             className="h-10 w-10 rounded-full object-cover"
                           />
@@ -666,7 +736,7 @@ export default function SchoolClassroomDetailModal({
               </div>
             )}
           </div>
-          
+
           <DialogFooter className="flex justify-between px-6 py-4">
             <p className="text-sm text-gray-500 self-center">
               {selectedStudentIds.length} students selected
@@ -675,7 +745,7 @@ export default function SchoolClassroomDetailModal({
               <Button variant="outline" onClick={handleStudentModalClose}>
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={handleAddStudents}
                 disabled={selectedStudentIds.length === 0}
               >
@@ -685,6 +755,15 @@ export default function SchoolClassroomDetailModal({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Drawer>
+      <SchoolClassroomSessionModal
+        isOpenCreateSession={openModalCreateSession}
+        onCloseCreateSession={() => {
+          (setOpenModalCreateSession(false));
+          // refresh after adding
+        }}
+        classroomId={classroom?._id || ''}
+      />
+    </Dialog>
   );
+
 } 

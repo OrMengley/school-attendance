@@ -109,7 +109,6 @@ export default function SchoolCreateClassroomModal({
       schoolId: user?.schoolId,
       teacherIds: [],
     }
-    
     try {
       if (initialData) {
         // Update existing classroom
