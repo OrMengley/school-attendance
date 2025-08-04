@@ -1,103 +1,56 @@
 import * as React from "react"
 import {
-    AudioWaveform,
-    Command,
-    Frame,
-    GalleryVerticalEnd,
-    PieChart,
-    FileText
+  ChartColumnBig,
+  BookOpenText,
+  User
 } from "lucide-react"
 
-import {NavMain} from "../nav-main"
-import {NavProjects} from "./nav-projects"
-import {NavUser} from "./nav-user"
-import {TeamSwitcher} from "./team-switcher"
+import { NavProjects } from "./nav-projects"
 import {
-    Sidebar,
-    SidebarContent,
-    SidebarFooter,
-    SidebarHeader,
-    SidebarRail
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarFooter,
+  SidebarRail
 } from "../ui/sidebar"
 
-// This is sample data.
+// Teacher-focused sidebar data
 const data = {
-    user: {
-        name: "teacher",
-        email: "teacher@example.com",
-        avatar: "/avatars/teacher.jpg"
+  user: {
+    name: "Teacher",
+    email: "teacher@example.com",
+    avatar: "/avatars/teacher.jpg"
+  },
+  projects: [
+    {
+      name: "Dashboard",
+      url: "/teacher",
+      icon: ChartColumnBig
     },
-    teams: [
-        {
-            name: "Acme Inc",
-            logo: GalleryVerticalEnd,
-            plan: "Enterprise"
-        }, {
-            name: "Acme Corp.",
-            logo: AudioWaveform,
-            plan: "Startup"
-        }, {
-            name: "Evil Corp.",
-            logo: Command,
-            plan: "Free"
-        },
-    ],
-    // navMain: [
-    //     {
-    //         title: "Viewer",
-    //         url: "/",
-    //         icon: SquareTerminal,
-    //         isActive: true,
-    //         items: [
-    //             {
-    //                 title: "Dashboard",
-    //                 url: "/dashboard"
-    //             },
-
-    //         ]
-    //     },
-    // ],
-    projects: [
-        {
-            name: "Dashboard",
-            url: "#",
-            icon: Frame
-        }, {
-            name: "Classroom",
-            url: "#",
-            icon: PieChart
-        }, {
-            name: "Reports",
-            url: "#",
-            icon: FileText
-        },
-    ]
+    {
+      name: "Profile",
+      url: "/teacher/profile",
+      icon: User
+    }
+  ]
 }
 
-export function AppSidebar({
-    ...props
-} : React.ComponentProps < typeof Sidebar >) {
-    return (
-        <Sidebar collapsible="icon" {...props}>
-            <SidebarHeader>
-                <TeamSwitcher teams={
-                    data.teams
-                }/>
-            </SidebarHeader>
-            <SidebarContent>
-                {/* <NavMain items={
-                    data.navMain
-                }/> */}
-                <NavProjects projects={
-                    data.projects
-                }/>
-            </SidebarContent>
-            <SidebarFooter>
-                <NavUser user={
-                    data.user
-                }/>
-            </SidebarFooter>
-            <SidebarRail/>
-        </Sidebar>
-    )
+export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
+  return (
+    <Sidebar collapsible="icon" {...props}>
+      <SidebarHeader>
+        <div className="p-4">
+          <h2 className="text-lg font-bold">Teacher</h2>
+          <p className="text-xs text-gray-500">{data.user.email}</p>
+        </div>
+      </SidebarHeader>
+      <SidebarContent>
+        <NavProjects projects={data.projects} />
+      </SidebarContent>
+      <SidebarFooter>
+        {/* You could add a small logout button or version info here */}
+      </SidebarFooter>
+      <SidebarRail />
+    </Sidebar>
+  )
 }
