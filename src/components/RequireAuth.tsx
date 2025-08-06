@@ -1,27 +1,27 @@
-import type { JSX } from "react";
+import { Navigate, useLocation } from "react-router-dom";
 import { useUser } from "../context/UserContext";
-import { Navigate } from "react-router-dom";
+import React from "react";
 
-export default function RequireAuth({
-  role,
-  children,
-}: {
-  role: "super_admin" | "admin" | "teacher" | "parent";
-  children: JSX.Element;
-}) {
+interface RequireAuthProps {
+  role: string;
+  children: React.ReactNode;
+}
+
+export default function RequireAuth({ role, children }: RequireAuthProps) {
   const { user, loading } = useUser();
+  const location = useLocation();
+
+  console.log("RequireAuth loading:", loading);
+  console.log("RequireAuth user:", user);
+  console.log("Required role:", role);
 
   if (loading) {
-    return <p>🔄 Loading...</p>; // ⏳ Wait until userContext loads
+    return <div>Loading...</div>; // Or loading spinner
+  }
+  
+  if (!user || user.role !== role) {
+    return <Navigate to="/unauthorized" replace />;
   }
 
-  if (!user) {
-    return <Navigate to="/login" />;
-  }
-
-  if (user.role !== role) {
-    return <Navigate to="/unauthorized" />;
-  }
-
-  return children;
+  return <>{children}</>;
 }
