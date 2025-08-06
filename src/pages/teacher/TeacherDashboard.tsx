@@ -3,7 +3,8 @@ import API from "../../lib/axios";
 import { useNavigate } from "react-router-dom";
 import useFetchData from "../../hooks/useFetchData";
 import {  Clock } from "lucide-react";
-import SessionCard from "../../components/teacher/SessionCard";
+import SessionCard from "../../components/teacher/sessionCard";
+
 
 interface SessionType {
     _id: string;

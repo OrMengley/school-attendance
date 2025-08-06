@@ -1,12 +1,28 @@
-import {SidebarProvider} from "./components/ui/sidebar";
 import "./App.css";
-import {BrowserRouter as Router} from "react-router";
-import {Route, Routes} from "react-router-dom";
+import React from "react";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { Toaster } from "sonner";
+
+import { SidebarProvider } from "./components/ui/sidebar";
+import { UserProvider } from "./context/UserContext";
+import RequireAuth from "./components/RequireAuth";
+
+// Layouts
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import SchoolLayout from "./pages/SchoolLayout";
 import ParentLayout from "./pages/ParentLayout";
 import TeacherLayout from "./pages/TeacherLayout";
+
+// Super Admin Pages
+import UserTable from "./pages/Users";
+
+// Teacher Pages
+import TeacherDashboard from "./pages/teacher/TeacherDashboard";
+import TeacherClassroomAttendance from "./pages/teacher/TeacherClassroomAttendance";
+import TeacherProfile from "./pages/teacher/TeacherProfile";
+
+// School Pages
 import SchoolDashboard from "./pages/school/ShoolDashboard";
 import SchoolTerm from "./pages/school/SchoolTerm";
 import SchoolClassroom from "./pages/school/SchoolClassroom";
@@ -14,111 +30,112 @@ import SchoolDepartment from "./pages/school/SchoolDepartment";
 import SchoolGrade from "./pages/school/SchoolGrade";
 import SchoolStudent from "./pages/school/SchoolStudent";
 import SchoolUser from "./pages/school/SchoolUser";
-import {UserProvider} from "./context/UserContext";
-import React from "react";
-import RequireAuth from "./components/RequireAuth";
-import UserTable from "./pages/Users";
-import {Toaster} from "sonner";
 import SchoolUserTrash from "./pages/school/SchoolUserTrash";
 import SchoolClassroomTrash from "./pages/school/SchoolClassroomTrash";
 import SchoolDepartmentTrash from "./pages/school/SchoolDepartmentTrash";
 import SchoolGradeTrash from "./pages/school/SchoolGradeTrash";
 import SchoolStudentTrash from "./pages/school/SchoolStudentTrash";
 import SchoolTermTrash from "./pages/school/SchoolTermTrash";
-import TeacherDashboard from "./pages/teacher/TeacherDashboard";
-import TeacherClassroomAttendance from "./pages/teacher/TeacherClassroomAttendance";
-import TeacherProfile from "./pages/teacher/TeacherProfile";
 
 function App() {
-    return (
-        <SidebarProvider>
-            <React.StrictMode>
-                <UserProvider>
-                    <Router>
-                        <Toaster position="top-right"/>
-                        <Routes>
-                            <Route path="/login"
-                                element={<Login/>}/>
-                            <Route path="/parent"
-                                element={
-                                    <RequireAuth
-                                role="parent"><ParentLayout/></RequireAuth>
-                            }></Route>
+  return (
+    // <React.StrictMode>
+    //   <UserProvider>
+    //     <SidebarProvider>
+          
+    //     </SidebarProvider>
+    //   </UserProvider>
+    // </React.StrictMode>
+    <SidebarProvider>
+      <React.StrictMode>
+        <UserProvider>
+        <Router>
+            <Toaster position="top-right" />
+            <Routes>
 
-                            {/* route for teacher */}
-                            <Route path="/teacher"
-                                element={
-                                    <RequireAuth
-                                role="teacher"><TeacherLayout/></RequireAuth>
-                            }>
-                                <Route path="/teacher" element={<TeacherDashboard />} />
-                                <Route path="/teacher/classrooms/:id" element={<TeacherClassroomAttendance />} />
-                                <Route path="/teacher/profile" element={<TeacherProfile />} />
-                            </Route>
+              {/* Public */}
+              <Route path="/login" element={<Login />} />
 
-                            {/* route for school */}
-                            <Route path="/school"
-                                element={
-                                    <RequireAuth
-                                role="admin"><SchoolLayout/></RequireAuth>
-                            }>
+              {/* Parent */}
+              <Route
+                path="/parent"
+                element={
+                  <RequireAuth role="parent">
+                    <ParentLayout />
+                  </RequireAuth>
+                }
+              />
 
-                                <Route path="/school/dashboard"
-                                    element={<SchoolDashboard/>}/>
-                                <Route path="/school/term"
-                                    element={<SchoolTerm/>}/>
-                                <Route path="/school/classroom"
-                                    element={<SchoolClassroom/>}/>
-                                <Route path="/school/user"
-                                    element={<SchoolUser/>}/>
-                                <Route path="/school/department"
-                                    element={<SchoolDepartment/>}/>
-                                <Route path="/school/grade"
-                                    element={<SchoolGrade/>}/>
-                                <Route path="/school/student"
-                                    element={<SchoolStudent/>}/>
-                                <Route path="/school/trash/user"
-                                    element={<SchoolUserTrash/>}/>
-                                <Route path="/school/trash/classroom"
-                                    element={<SchoolClassroomTrash/>}/>
-                                <Route path="/school/trash/department"
-                                    element={<SchoolDepartmentTrash/>}/>
-                                <Route path="/school/trash/grade"
-                                    element={<SchoolGradeTrash/>}/>
-                                <Route path="/school/trash/student"
-                                    element={<SchoolStudentTrash/>}/>
-                                <Route path="/school/trash/term"
-                                    element={<SchoolTermTrash/>}/>
-                            </Route>
-                            <Route path="/"
-                                element={
-                                    <RequireAuth
-                                role="super_admin"><Home/></RequireAuth>
-                            }>
-                                <Route path="/view/user"
-                                    element={<UserTable/>}/>
-                                <Route path="/view/classroom"
-                                    element={<UserTable/>}/>
-                                <Route path="/view/school"
-                                    element={<UserTable/>}/>
-                                <Route path="/view/dashboard"
-                                    element={<UserTable/>}/>
-                                <Route path="/creator/user"
-                                    element={<UserTable/>}/>
-                                <Route path="/creator/classroom"
-                                    element={<UserTable/>}/>
-                                <Route path="/creator/school"
-                                    element={<UserTable/>}/>
-                            </Route>
-                            <Route path="/unauthorized"
-                                element={
-                                    <h2>Access Denied</h2>
-                                }/>
-                        </Routes>
-                    </Router>
-                </UserProvider>
-            </React.StrictMode>
-        </SidebarProvider>
-    );
+              {/* Teacher */}
+              <Route
+                path="/teacher"
+                element={
+                  <RequireAuth role="teacher">
+                    <TeacherLayout />
+                  </RequireAuth>
+                }
+              >
+                <Route index element={<TeacherDashboard />} />
+                <Route path="classrooms/:id" element={<TeacherClassroomAttendance />} />
+                <Route path="profile" element={<TeacherProfile />} />
+              </Route>
+
+              {/* Admin (School) */}
+              <Route
+                path="/school"
+                element={
+                  <RequireAuth role="admin">
+                    <SchoolLayout />
+                  </RequireAuth>
+                }
+              >
+                <Route path="dashboard" element={<SchoolDashboard />} />
+                <Route path="term" element={<SchoolTerm />} />
+                <Route path="classroom" element={<SchoolClassroom />} />
+                <Route path="user" element={<SchoolUser />} />
+                <Route path="department" element={<SchoolDepartment />} />
+                <Route path="grade" element={<SchoolGrade />} />
+                <Route path="student" element={<SchoolStudent />} />
+
+                {/* Trash Pages */}
+                <Route path="trash/user" element={<SchoolUserTrash />} />
+                <Route path="trash/classroom" element={<SchoolClassroomTrash />} />
+                <Route path="trash/department" element={<SchoolDepartmentTrash />} />
+                <Route path="trash/grade" element={<SchoolGradeTrash />} />
+                <Route path="trash/student" element={<SchoolStudentTrash />} />
+                <Route path="trash/term" element={<SchoolTermTrash />} />
+              </Route>
+
+              {/* Super Admin */}
+              <Route
+                path="/"
+                element={
+                  <RequireAuth role="super_admin">
+                    <Home />
+                  </RequireAuth>
+                }
+              >
+                <Route path="view/user" element={<UserTable />} />
+                <Route path="view/classroom" element={<UserTable />} />
+                <Route path="view/school" element={<UserTable />} />
+                <Route path="view/dashboard" element={<UserTable />} />
+                <Route path="creator/user" element={<UserTable />} />
+                <Route path="creator/classroom" element={<UserTable />} />
+                <Route path="creator/school" element={<UserTable />} />
+              </Route>
+
+              {/* Unauthorized fallback */}
+              <Route path="*" element={<h2>Access Denied</h2>} />
+
+              {/* Optional: catch-all fallback */}
+              {/* <Route path="*" element={<Navigate to="/unauthorized" />} /> */}
+
+            </Routes>
+          </Router>
+        </UserProvider>
+      </React.StrictMode>
+    </SidebarProvider>
+  );
 }
+
 export default App;

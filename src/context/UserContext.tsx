@@ -1,9 +1,9 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import type { User } from "../types/User";
+import type { UserType } from "../types/User";
 
 interface UserContextType {
-  user: User | null;
-  setUser: (user: User | null) => void;
+  user: UserType | null;
+  setUser: (user: UserType | null) => void;
   loading: boolean;
 }
 
@@ -14,7 +14,7 @@ const UserContext = createContext<UserContextType>({
 });
 
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
