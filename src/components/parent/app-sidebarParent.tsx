@@ -4,8 +4,7 @@ import {
   Command,
   Frame,
   GalleryVerticalEnd,
-  Map,
-  PieChart,
+
  
 } from "lucide-react"
 
@@ -21,13 +20,11 @@ import {
   SidebarRail,
 } from "../ui/sidebar"
 
+
+
 // This is sample data.
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
+  user: JSON.parse(localStorage.getItem("user") || '{"name":"Guest","email":""}'),
   teams: [
     {
       name: "Acme Inc",
@@ -48,25 +45,16 @@ const data = {
   
   projects: [
     {
-      name: "Dashboard",
-      url: "/parent/dashboard",
+      name: "ទំព័រដើម",
+      url: "/parent",
       icon: Frame,
     },
     {
-      name: "Terms",
-      url: "/parent/terms",
+      name: "កូនរបស់អ្នក",
+      url: "/parent/child/:id",
       icon: Frame,
     },
-    {
-      name: "Classes",
-      url: "/parent/classes",
-      icon: PieChart,
-    },
-    {
-      name: "Users",
-      url: "/parent/users",
-      icon: Map,
-    },
+   
   ],
 }
 
@@ -81,7 +69,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

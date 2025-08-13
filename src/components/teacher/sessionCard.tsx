@@ -1,4 +1,5 @@
 import { Badge } from "../ui/badge"
+import { KeenIcon } from "../../components/ui/keenicon";
 import { Clock, Users } from "lucide-react"
 interface Student {
     _id?: string
@@ -18,7 +19,7 @@ interface SessionCardProps {
     studentCount: number;
     subjectAvatar?: string | null;
     onClick?: () => void;
-  }
+}
 
 export default function SessionCard({
     subjectName,
@@ -34,7 +35,7 @@ export default function SessionCard({
     onClick,
 }: SessionCardProps) {
     const todayName = new Date().toLocaleDateString("en-US", { weekday: "long" });
-    
+
     // --- Time Progress Calculation ---
     const now = new Date();
     const start = new Date();
@@ -45,17 +46,17 @@ export default function SessionCard({
     let progress = 0;
     if (sessionDay === todayName) {
         if (now < start) {
-          progress = 0;
+            progress = 0;
         } else if (now > end) {
-          progress = 100;
+            progress = 100;
         } else {
-          const total = end.getTime() - start.getTime();
-          const done = now.getTime() - start.getTime();
-          progress = Math.min(100, Math.max(0, (done / total) * 100));
+            const total = end.getTime() - start.getTime();
+            const done = now.getTime() - start.getTime();
+            progress = Math.min(100, Math.max(0, (done / total) * 100));
         }
-      } else {
+    } else {
         progress = 0; // If session is not today, no progress
-      }
+    }
 
     // Khmer status labels
     let statusLabel = "មុខវិជ្ជាបន្ទាប់";
@@ -64,7 +65,7 @@ export default function SessionCard({
     } else if (progress > 0 && progress < 100) {
         statusLabel = "កំពុងបង្រៀន";
     }
-    
+
     return (
         <div
             onClick={onClick}
@@ -79,6 +80,7 @@ export default function SessionCard({
                         className="w-full h-full object-cover"
                     />
                 ) : (
+
                     <span>{subjectName?.charAt(0).toUpperCase()}</span>
                 )}
             </div>
@@ -99,20 +101,22 @@ export default function SessionCard({
                     <Badge className={`${statusLabel === "បានបញ្ចប់" ? "bg-green-100 text-green-600" : "bg-yellow-100 text-yellow-600"} $`}>
                         <div className="text-xs font-semibold">{statusLabel}</div>
                     </Badge>
-
                 </div>
-                <h3 className="text-base font-semibold text-gray-900">{subjectName}</h3>
-                <p className="text-xs text-gray-500">{classroomName}</p>
-
-
-
+                <h3 className="text-lg font-semibold text-gray-900">{subjectName}</h3>
+               <div className="flex flex-row gap-2 justify-between">
+               <div className="flex items-center gap-2 text-lg text-gray-600 mt-1">
+                    <KeenIcon name="ki-duotone ki-delivery-door
+" size="lg" className="text-blue-600" />
+                    <span className=" text-gray-500">{classroomName}</span>
+                </div>
                 {/* Time */}
-                <div className="flex items-center gap-2 text-xs text-gray-600 mt-1">
-                    <Clock className="w-3 h-3 text-blue-600" />
+                <div className="flex items-center gap-2 text-lg text-gray-600 mt-1">
+                    <KeenIcon name="ki-duotone ki-timer" size="lg" className="text-blue-600" />
                     <span>
                         {startHour}:{startMin} - {endHour}:{endMin}
                     </span>
                 </div>
+               </div>
 
                 {/* Students Avatars */}
                 <div className="flex items-center gap-1 mt-3">

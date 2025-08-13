@@ -72,7 +72,6 @@ interface StudentType {
   enrollments: Enrollment[];
   classroom?: ClassroomType;
   term?: TermType;
-
 }
 
 

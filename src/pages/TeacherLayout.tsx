@@ -56,7 +56,7 @@ export default function TeacherLayout() {
                     <BreadcrumbSeparator className="hidden md:block" />
                     {i == urlPath.length - 1 ? (
                       <BreadcrumbItem>
-                        <BreadcrumbPage>{path}</BreadcrumbPage>
+                        {/* <BreadcrumbPage>{path}</BreadcrumbPage> */}
                       </BreadcrumbItem>
                     ) : (
                       <BreadcrumbItem className="hidden md:block">

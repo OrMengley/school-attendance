@@ -31,6 +31,16 @@ import {
 } from "../ui/sidebar"
 import { useNavigate } from "react-router-dom"
 import { useUser } from "../../context/UserContext"
+
+
+interface UserType {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  schoolId?: string;
+}
+
 export function NavUser() {
   const { isMobile } = useSidebar()
   const {user} = useUser()
