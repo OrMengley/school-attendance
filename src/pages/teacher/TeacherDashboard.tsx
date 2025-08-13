@@ -224,7 +224,9 @@ export default function TeacherDashboard() {
                                     students={studentsByClassroom[s.classroomId] || []}
                                     studentCount={studentsByClassroom[s.classroomId]?.length || 0}
                                     subjectAvatar={null}
-                                    onClick={() => navigate(`/teacher/classrooms/${s.classroomId}`)}
+                                    onClick={() => navigate(`/teacher/classrooms/${s.classroomId}`, {
+                                        state: { sessionId: s._id }
+                                    })}
                                 />
                             ))
                         } </div>

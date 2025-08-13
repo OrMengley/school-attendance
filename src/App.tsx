@@ -36,6 +36,9 @@ import SchoolDepartmentTrash from "./pages/school/SchoolDepartmentTrash";
 import SchoolGradeTrash from "./pages/school/SchoolGradeTrash";
 import SchoolStudentTrash from "./pages/school/SchoolStudentTrash";
 import SchoolTermTrash from "./pages/school/SchoolTermTrash";
+import ParentDashboard from "./pages/parent/ParentDashboard";
+import ParentChildAttendance from "./pages/parent/ParentChildAttendance";
+import SchoolParents from "./pages/school/SchoolParent";
 
 function App() {
   return (
@@ -53,8 +56,12 @@ function App() {
             <Toaster position="top-right" />
             <Routes>
 
+
+
               {/* Public */}
               <Route path="/login" element={<Login />} />
+
+
 
               {/* Parent */}
               <Route
@@ -64,7 +71,10 @@ function App() {
                     <ParentLayout />
                   </RequireAuth>
                 }
-              />
+              >
+                <Route index element={<ParentDashboard />} />
+                <Route path="child/:id" element={<ParentChildAttendance />} />
+              </Route>
 
               {/* Teacher */}
               <Route
@@ -76,9 +86,10 @@ function App() {
                 }
               >
                 <Route index element={<TeacherDashboard />} />
-                <Route path="classrooms/:id" element={<TeacherClassroomAttendance />} />
+                <Route path="classrooms/:id" element={<TeacherClassroomAttendance/>}/>
                 <Route path="profile" element={<TeacherProfile />} />
               </Route>
+
 
               {/* Admin (School) */}
               <Route
@@ -96,7 +107,7 @@ function App() {
                 <Route path="department" element={<SchoolDepartment />} />
                 <Route path="grade" element={<SchoolGrade />} />
                 <Route path="student" element={<SchoolStudent />} />
-
+                <Route path="parents" element={<SchoolParents />} />
                 {/* Trash Pages */}
                 <Route path="trash/user" element={<SchoolUserTrash />} />
                 <Route path="trash/classroom" element={<SchoolClassroomTrash />} />
@@ -105,6 +116,8 @@ function App() {
                 <Route path="trash/student" element={<SchoolStudentTrash />} />
                 <Route path="trash/term" element={<SchoolTermTrash />} />
               </Route>
+
+
 
               {/* Super Admin */}
               <Route
