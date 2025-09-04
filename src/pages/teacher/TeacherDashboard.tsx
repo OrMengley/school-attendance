@@ -4,43 +4,10 @@ import { useNavigate } from "react-router-dom";
 import useFetchData from "../../hooks/useFetchData";
 import {  Clock } from "lucide-react";
 import SessionCard from "../../components/teacher/sessionCard";
+import type { ClassroomType } from "../../types/Classroom";
+import type { TermType } from "../../types/Term";
 
 
-interface SessionType {
-    _id: string;
-    subjectName: string;
-    teacherId: string;
-    sessionStartHour: string;
-    sessionStartMin: string;
-    sessionEndHour: string;
-    sessionEndMin: string;
-    sessionDay: string;
-}
-interface TermType {
-    _id: string;
-    year: string;
-    departmentId: string;
-    createdAt: string;
-}
-interface GradeType {
-    _id: string;
-    name: string;
-    termId: string;
-    schoolId?: string;
-    createdAt: string;
-    term: TermType;
-}
-interface ClassroomType {
-    _id: string;
-    name: string;
-    gradeId: string;
-    termId: string;
-    createdAt: string;
-    grade: GradeType;
-    studentIds: string[];
-    term: TermType;
-    sessions: SessionType[];
-}
 
 type FilterType = | "today" | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
 
@@ -102,10 +69,11 @@ export default function TeacherDashboard() {
     // flatten all sessions with classroom info
     const allSessions = classrooms.flatMap((c) => Array.isArray(c.sessions) ? c.sessions.map((s) => ({
         ...s,
+        _id: (s as any)._id,
         classroomName: c.name,
-        classroomId: c._id,
-        termId: c.termId,
-        year: terms?.find((t) => t._id === c.termId)?.year
+        classroom_id: c._id,
+        term_id: c.term_id,
+        year: terms?.find((t) => t._id === c.term_id)?.year
     })) : []);
 
     // const todayName = new Date().toLocaleDateString("en-US", { weekday: "long" });
@@ -126,8 +94,8 @@ export default function TeacherDashboard() {
 
         // Filter by term
         if (selectedTermId !== "all" && s.year) {
-            const sessionTermId = classrooms.find(c => c._id === s.classroomId)?.termId;
-            if (sessionTermId !== selectedTermId)
+            const sessionTerm_id = classrooms.find(c => c._id === s.classroom_id)?.term_id;
+            if (sessionTerm_id !== selectedTermId)
                 return false;
 
         }
@@ -221,10 +189,10 @@ export default function TeacherDashboard() {
                                     endHour={s.sessionEndHour}
                                     endMin={s.sessionEndMin}
                                     sessionDay={s.sessionDay}   // <-- add this
-                                    students={studentsByClassroom[s.classroomId] || []}
-                                    studentCount={studentsByClassroom[s.classroomId]?.length || 0}
+                                    students={studentsByClassroom[s.classroom_id] || []}
+                                    studentCount={studentsByClassroom[s.classroom_id]?.length || 0}
                                     subjectAvatar={null}
-                                    onClick={() => navigate(`/teacher/classrooms/${s.classroomId}`, {
+                                    onClick={() => navigate(`/teacher/classrooms/${s.classroom_id}`, {
                                         state: { sessionId: s._id }
                                     })}
                                 />

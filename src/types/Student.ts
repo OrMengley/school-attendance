@@ -18,8 +18,8 @@ export interface StudentType {
     parentPhone: string;
     sex?: "male" | "female";
     status?: StudentStatus;
-    classroomId?: string; // current classroomId
-    termId?: string; // current termId
+    classroom_id?: string; // current classroomId
+    term_id?: string; // current termId
     enrollments: Enrollment[];
     createdAt: string; // ISO string from MongoDB
     classroom?: ClassroomType;

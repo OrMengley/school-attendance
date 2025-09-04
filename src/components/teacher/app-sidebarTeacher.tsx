@@ -1,10 +1,10 @@
 import * as React from "react"
 import {
   ChartColumnBig,
-  BookOpenText,
   User
 } from "lucide-react"
-
+import { KeenIcon } from "../../components/ui/keenicon";
+import { NavMain } from "./nav-main"
 import { NavProjects } from "./nav-projects"
 import {
   Sidebar,
@@ -14,6 +14,8 @@ import {
   SidebarRail
 } from "../ui/sidebar"
 
+
+// const reportsIcon = <KeenIcon name="square-terminal" />
 // Teacher-focused sidebar data
 const data = {
   user: {
@@ -21,6 +23,39 @@ const data = {
     email: "teacher@example.com",
     avatar: "/avatars/teacher.jpg"
   },
+  navMain: [
+    {
+      title: "Reports",
+      url: "/teacher/reports",
+      // icon: reportsIcon,
+      items: [
+        {
+          title: "Daily",
+          url: "/teacher/reports/daily",
+        },
+        {
+          title: "student-summary",
+          url: "/teacher/reports/student-summary",
+        },
+        {
+          title: "classroom-analytics",
+          url: "/teacher/reports/classroom-analytics",
+        },
+        {
+          title: "students",
+          url: "/teacher/reports/student-profile/:studentId",
+        },
+        {
+          title: "terms",
+          url: "/teacher/reports/term",
+        },
+        {
+          title: "alert",
+          url: "/teacher/reports/alerts",
+        }
+      ],
+    },
+  ],
   projects: [
     {
       name: "Dashboard",
@@ -45,7 +80,9 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
         </div>
       </SidebarHeader>
       <SidebarContent>
+        
         <NavProjects projects={data.projects} />
+        <NavMain items={data.navMain as any} />
       </SidebarContent>
       <SidebarFooter>
         {/* You could add a small logout button or version info here */}

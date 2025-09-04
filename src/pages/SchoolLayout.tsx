@@ -32,7 +32,6 @@ export default function SchoolLayout() {
   return (
     <div className="flex min-h-screen w-full">
       {" "}
-    
       <AppSidebar className="w-64 shrink-0" />{" "}
       
       <div className="flex flex-1 flex-col bg-gray-50">

@@ -6,8 +6,8 @@ import type { SessionType } from "./Session";
 export interface ClassroomType {
     _id: string;
     name: string;
-    gradeId: string;
-    termId: string;
+    grade_id: string;
+    term_id: string;
     createdAt: string;
     grade: GradeType;
     studentIds:string[];

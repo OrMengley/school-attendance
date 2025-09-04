@@ -1,28 +1,17 @@
 import { useEffect, useState } from "react"
 import API from "../../lib/axios"
 import { Button } from "../../components/ui/button"
+import type { UserType } from "../../types/User";
+import type {ClassroomType} from "../../types/Classroom";
+import type { SchoolType } from "../../types/SchoolType";
 
-interface TeacherProfileData {
-  id: string
-  name: string
-  email: string
-  schoolId?: string
-  classroomIds?: string[]
-}
 
-interface SchoolData {
-  _id: string
-  name: string
-}
 
-interface ClassroomType {
-  _id: string
-  name: string
-}
+
 
 export default function TeacherProfile() {
-  const [profile, setProfile] = useState<TeacherProfileData | null>(null)
-  const [school, setSchool] = useState<SchoolData | null>(null)
+  const [profile, setProfile] = useState<UserType | null>(null)
+  const [school, setSchool] = useState<SchoolType | null>(null)
   const [classrooms, setClassrooms] = useState<ClassroomType[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -32,15 +21,15 @@ export default function TeacherProfile() {
       setLoading(false)
       return
     }
-    const user: TeacherProfileData = JSON.parse(userJson)
+    const user: UserType = JSON.parse(userJson)
     setProfile(user)
 
     const fetchExtraData = async () => {
       try {
         // fetch school info
-        if (user.schoolId) {
-            if (user.schoolId) {
-                const res = await API.get(`/schools/${user.schoolId}`)
+        if (user.school_id) {
+            if (user.school_id) {
+                const res = await API.get(`/schools/${user.school_id}`)
                 setSchool(res.data)
               }
           
