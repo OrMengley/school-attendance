@@ -36,7 +36,7 @@ export default function LoginPage() {
     try {
       const res = await API.post("/login", { email, password });
       const { token, user } = res.data;
-
+      
       if (!token || !user || !user.role) {
         throw new Error("Invalid response from server");
       }

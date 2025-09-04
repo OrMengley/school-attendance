@@ -101,7 +101,7 @@ export default function ParentDashboard() {
   };
 
   return (
-    <div className="p-4 max-w-3xl mx-auto">
+    <div className="p-4 max-w-3xl">
       <div className="mb-4">
         <h1 className="text-xl font-semibold">ផ្ទាំងគ្រប់គ្រងមាតាបិតា</h1>
         <p className="text-sm text-muted-foreground">

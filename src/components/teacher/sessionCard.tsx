@@ -1,11 +1,6 @@
 import { Badge } from "../ui/badge"
 import { KeenIcon } from "../../components/ui/keenicon";
-import { Clock, Users } from "lucide-react"
-interface Student {
-    _id?: string
-    name?: string
-    profileUrl?: string
-}
+import type { StudentType } from "../school/school-classroom-detail-modal";
 
 interface SessionCardProps {
     subjectName: string;
@@ -15,7 +10,7 @@ interface SessionCardProps {
     endHour: string;
     endMin: string;
     sessionDay: string; // new
-    students: Student[];
+    students: StudentType[];
     studentCount: number;
     subjectAvatar?: string | null;
     onClick?: () => void;
@@ -72,7 +67,7 @@ export default function SessionCard({
             className="relative flex items-center gap-4 rounded-xl bg-white shadow-md border p-4 overflow-hidden cursor-pointer hover:shadow-lg transition"
         >
             {/* Left Avatar (Subject Icon) */}
-            <div className="flex-shrink-0 w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center text-white text-lg font-bold overflow-hidden">
+            <div className="flex-shrink-0 w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 text-lg font-bold overflow-hidden">
                 {subjectAvatar ? (
                     <img
                         src={subjectAvatar}

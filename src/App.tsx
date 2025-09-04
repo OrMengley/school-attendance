@@ -39,6 +39,14 @@ import SchoolTermTrash from "./pages/school/SchoolTermTrash";
 import ParentDashboard from "./pages/parent/ParentDashboard";
 import ParentChildAttendance from "./pages/parent/ParentChildAttendance";
 import SchoolParents from "./pages/school/SchoolParent";
+import AccessDenied from "./pages/AccessDenied";
+import TeacherReportsHome from "./pages/teacher/reports/TeacherReportsHome";
+import ReportDailyAttendance from "./pages/teacher/reports/ReportDailyAttendance";
+import ReportStudentSummary from "./pages/teacher/reports/ReportStudentSummary";
+import ReportClassroomAnalytics from "./pages/teacher/reports/ReportClassroomAnalytics";
+import ReportStudentProfile from "./pages/teacher/reports/ReportStudentProfile";
+import ReportTerm from "./pages/teacher/reports/ReportTerm";
+import ReportAlerts from "./pages/teacher/reports/ReportAlerts";
 
 function App() {
   return (
@@ -60,6 +68,7 @@ function App() {
 
               {/* Public */}
               <Route path="/login" element={<Login />} />
+              <Route path="/unauthorized" element={<AccessDenied />} />
 
 
 
@@ -73,7 +82,7 @@ function App() {
                 }
               >
                 <Route index element={<ParentDashboard />} />
-                <Route path="child/:id" element={<ParentChildAttendance />} />
+                
               </Route>
 
               {/* Teacher */}
@@ -88,6 +97,15 @@ function App() {
                 <Route index element={<TeacherDashboard />} />
                 <Route path="classrooms/:id" element={<TeacherClassroomAttendance/>}/>
                 <Route path="profile" element={<TeacherProfile />} />
+
+                <Route path="reports" element={<TeacherReportsHome />} />
+                <Route path="reports/daily" element={<ReportDailyAttendance />} />
+                <Route path="reports/student-summary" element={<ReportStudentSummary />} />
+                <Route path="reports/classroom-analytics" element={<ReportClassroomAnalytics />} />
+                <Route path="reports/student-profile/:studentId" element={<ReportStudentProfile />} />
+                <Route path="reports/term" element={<ReportTerm />} />
+                <Route path="reports/alerts" element={<ReportAlerts />} />
+                
               </Route>
 
 
@@ -138,7 +156,7 @@ function App() {
               </Route>
 
               {/* Unauthorized fallback */}
-              <Route path="*" element={<h2>Access Denied</h2>} />
+              <Route path="*" element={<AccessDenied />} />
 
               {/* Optional: catch-all fallback */}
               {/* <Route path="*" element={<Navigate to="/unauthorized" />} /> */}

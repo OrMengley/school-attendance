@@ -1,22 +1,14 @@
 import { useEffect, useState } from "react";
 import API from "../lib/axios";
+import type { ClassroomType } from "../types/Classroom";
+import type { StudentType } from "../types/Student";
 
-interface Classroom {
-  _id: string;
-  name: string;
-}
 
-interface Student {
-  _id: string;
-  name: string;
-  parentPhone: string;
-  classroomId: string;
-}
 
 export default function AttendancePage() {
-  const [classrooms, setClassrooms] = useState<Classroom[]>([]);
+  const [classrooms, setClassrooms] = useState<ClassroomType[]>([]);
   const [selectedClassroom, setSelectedClassroom] = useState("");
-  const [students, setStudents] = useState<Student[]>([]);
+  const [students, setStudents] = useState<StudentType[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -30,7 +22,7 @@ export default function AttendancePage() {
     setLoading(true);
     API.get("/students") // fetch all and filter (until API supports ?classroomId=...)
       .then((res) => {
-        const filtered = res.data.filter((s: Student) => s.classroomId === selectedClassroom);
+        const filtered = res.data.filter((s: StudentType) => s.classroomId === selectedClassroom);
         setStudents(filtered);
       })
       .catch(() => alert("Failed to fetch students"))

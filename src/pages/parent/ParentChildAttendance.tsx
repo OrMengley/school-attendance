@@ -5,18 +5,9 @@ import { Loader2 } from "lucide-react";
 import API from "../../lib/axios";
 import type { ClassroomType } from "../../types/Classroom";
 import type { StudentType } from "../../types/Student";
+import type { AttendanceType } from "../../types/Attendance";
 
-// raw attendance row (matches backend)
-type AttendanceRaw = {
-  _id: string;
-  studentId: string;
-  classroomId: string;
-  sessionId?: string;
-  date: string; // YYYY-MM-DD
-  status: "checkin" | "checkout";
-  checkinTime?: string;  // ISO
-  checkoutTime?: string; // ISO
-};
+
 
 function fmtTime(iso?: string) {
   if (!iso) return "—";
@@ -45,7 +36,7 @@ export default function ParentAttendanceDialog({
   classrooms?: ClassroomType[];
 }) {
   const [range, setRange] = useState<{ from?: string; to?: string }>({});
-  const [rows, setRows] = useState<AttendanceRaw[]>([]);
+  const [rows, setRows] = useState<AttendanceType[]>([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -71,7 +62,7 @@ export default function ParentAttendanceDialog({
         if (range.from) qs.append("from", range.from);
         if (range.to) qs.append("to", range.to);
         const url = `/parents/me/children/${student._id}/attendance${qs.toString() ? `?${qs.toString()}` : ""}`;
-        const res = await API.get<AttendanceRaw[]>(url);
+        const res = await API.get<AttendanceType[]>(url);
         if (!active) return;
         setRows(res.data || []);
       } catch (e: any) {

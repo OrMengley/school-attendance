@@ -49,12 +49,6 @@ const data = {
       url: "/parent",
       icon: Frame,
     },
-    {
-      name: "កូនរបស់អ្នក",
-      url: "/parent/child/:id",
-      icon: Frame,
-    },
-   
   ],
 }
 
@@ -68,7 +62,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {/* <NavMain items={data.navMain} /> */}
         <NavProjects projects={data.projects} />
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter> 
         <NavUser />
       </SidebarFooter>
       <SidebarRail />
