@@ -15,7 +15,10 @@ import ParentLayout from "./pages/ParentLayout";
 import TeacherLayout from "./pages/TeacherLayout";
 
 // Super Admin Pages
-import UserTable from "./pages/Users";
+import UserPage from "./pages/Users";
+import SchoolPage from "./pages/Schools";
+import CreateSchoolPage from "./components/CreateSchool.tsx";
+import CreateUserPage from "./components/CreateUser.tsx";
 
 // Teacher Pages
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
@@ -97,7 +100,6 @@ function App() {
                 <Route index element={<TeacherDashboard />} />
                 <Route path="classrooms/:id" element={<TeacherClassroomAttendance/>}/>
                 <Route path="profile" element={<TeacherProfile />} />
-
                 <Route path="reports" element={<TeacherReportsHome />} />
                 <Route path="reports/daily" element={<ReportDailyAttendance />} />
                 <Route path="reports/student-summary" element={<ReportStudentSummary />} />
@@ -105,7 +107,6 @@ function App() {
                 <Route path="reports/student-profile/:studentId" element={<ReportStudentProfile />} />
                 <Route path="reports/term" element={<ReportTerm />} />
                 <Route path="reports/alerts" element={<ReportAlerts />} />
-                
               </Route>
 
 
@@ -146,13 +147,13 @@ function App() {
                   </RequireAuth>
                 }
               >
-                <Route path="view/user" element={<UserTable />} />
-                <Route path="view/classroom" element={<UserTable />} />
-                <Route path="view/school" element={<UserTable />} />
-                <Route path="view/dashboard" element={<UserTable />} />
-                <Route path="creator/user" element={<UserTable />} />
-                <Route path="creator/classroom" element={<UserTable />} />
-                <Route path="creator/school" element={<UserTable />} />
+                <Route path="view/users" element={<UserPage />} />
+                <Route path="view/classroom" element={<UserPage />} />
+                <Route path="view/school" element={<SchoolPage />} />
+                <Route path="view/dashboard" element={<UserPage />} />
+                <Route path="creator/user" element={<CreateUserPage />} />
+                <Route path="creator/classroom" element={<UserPage />} />
+                <Route path="creator/school" element={<CreateSchoolPage />} />
               </Route>
 
               {/* Unauthorized fallback */}

@@ -18,27 +18,17 @@ import {
 } from "../../components/ui/select";
 import API from "../../lib/axios";
 import { useUser } from "../../context/UserContext";
-
-
-interface TermType {
-    _id?: string;
-    year: string;
-}
-interface GradeType {
-    _id: string;
-    name: string;
-    termId: string;
-    schoolId?: string;
-    createdAt: string;
-    term: TermType;
-}
+import type { GradeType } from "../../types/Grade";
+import type { TermType } from "../../types/Term";
+import type { DepartmentType } from "../../types/Department";
+import useFetchData from "../../hooks/useFetchData";
 
 
 
 interface GradeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit?: (data: { _id?: string; name: string; termId: string; schoolId?: string }) => void;
+  onSubmit?: (data: { _id?: string; name: string; term_id: string; school_id?: string, department_id?:string }) => void;
   initialData?: GradeType | null;
 }
 
@@ -49,26 +39,47 @@ export default function SchoolCreateGradeModal({
   initialData,
 }: GradeModalProps) {
   const [name, setName] = useState(initialData?.name || "");
-  const [termId, setTermId] = useState<string | undefined>(initialData?.termId || "");
+  const [term_id, setTerm_id] = useState<string | undefined>(initialData?.term_id || "");
+  const [department_id, setDepartment_id] = useState<string | undefined>("");
+  // const  [department, setDepartment] = useState<DepartmentType | null>(null);
   const [terms, setTerms] = useState<TermType[]>([]);
   const { user } = useUser();
+  const { data: departmentData} = useFetchData<DepartmentType>("/departments");
+
+
+  const getTermsByDeparment = async (department_id: string) => {
+    try {
+      const res = await API.get(`/terms/department/${department_id}`);
+      return res.data;
+    } catch (error) {
+      console.error(error);
+      return [];
+    }
+  };
+
+
+  useEffect(() => {
+    if (department_id) {
+      getTermsByDeparment(department_id).then((terms) => {
+        setTerms(terms);
+      });
+    }
+  }, [department_id]);
 
   useEffect(() => {
     if (isOpen) {
       setName(initialData?.name || "");
-      setTermId(initialData?.termId || "");
-      API.get("/terms")
-        .then((res) => setTerms(res.data || []))
-        .catch(() => setTerms([]));
-        
+      setTerm_id(initialData?.term_id || "");
+
     }
   }, [isOpen, initialData]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const _id = initialData?._id || `grade-${Date.now()}`;
-    const schoolId = user?.schoolId || initialData?.schoolId;
-    onSubmit?.({ _id, name, termId: termId || "", schoolId });
+    const school_id = user?.school_id || initialData?.school_id;
+    
+    onSubmit?.({ _id, name,department_id, term_id: term_id || "", school_id: school_id });
   };
 
   return (
@@ -86,7 +97,19 @@ export default function SchoolCreateGradeModal({
             required
           />
 
-          <Select value={termId} onValueChange={setTermId} required>
+          <Select value={department_id} onValueChange={setDepartment_id} required>
+            <SelectTrigger>
+              <SelectValue placeholder="Select Department" />
+            </SelectTrigger>
+            <SelectContent>
+              {departmentData.map((department) => (
+                <SelectItem key={department._id} value={department._id || ""}>
+                  {department.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={term_id} onValueChange={setTerm_id} required disabled={!department_id}>
             <SelectTrigger>
               <SelectValue placeholder="Select Term" />
             </SelectTrigger>

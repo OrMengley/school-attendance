@@ -1,8 +1,8 @@
-import {useEffect, useState} from "react";
-import {storage} from "../../firebase";
+import { useEffect, useState } from "react";
+import { storage } from "../../firebase";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import {format} from "date-fns";
-import {ChevronDownIcon} from "lucide-react";
+import { format } from "date-fns";
+import { ChevronDownIcon } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -11,10 +11,11 @@ import {
     DialogFooter,
     DialogDescription
 } from "../ui/dialog";
-import {Button} from "../ui/button";
-import {Input} from "../ui/input";
-import {Calendar} from "../ui/calendar";
-import {Popover, PopoverContent, PopoverTrigger} from "../ui/popover";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Calendar } from "../ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { useUser } from "../../context/UserContext";
 import {
     Select,
     SelectContent,
@@ -23,72 +24,12 @@ import {
     SelectValue
 } from "../ui/select";
 import API from "../../lib/axios";
-import {toast} from "sonner";
-
+import { toast } from "sonner";
 import React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-
-
-export interface Enrollment {
-  termId: string;
-  classroomId: string;
-}
-
-export type StudentStatus = "active" | "inactive";
-
-interface StudentType {
-  _id: string; // _id
-  name: string;
-  firstName?: string;
-  lastName?: string;
-  dob?: string; // Format: YYYY-MM-DD
-  address?: string;
-  profileUrl?: string;
-  parentPhone: string;
-  sex?: "male" | "female";
-  status?: StudentStatus;
-  classroomId?: string; // current classroomId
-  termId?: string; // current termId
-  createdAt?: string;
-  enrollments: Enrollment[];
-  classroom?: ClassroomType;
-  term?: TermType;
-
-}
-
-interface ClassroomType {
-    _id: string;
-    name: string;
-    gradeId: string;
-    termId: string;
-    createdAt: string;
-    grade: {
-        _id: string;
-        name: string;
-        termId: string;
-        schoolId?: string;
-        createdAt: string;
-        term: {
-            _id: string;
-            year: string;
-            departmentId: string;
-            createdAt: string;
-        };
-    };
-    term: {
-        _id: string;
-        year: string;
-        departmentId: string;
-        createdAt: string;
-    };
-}
-
-interface TermType {
-    _id: string;
-    year: string;
-    departmentId: string;
-    createdAt: string;
-}
+import type { StudentType } from "../../types/Student";
+import type { TermType } from "../../types/Term";
+import type { ClassroomType } from "../../types/Classroom";
 
 interface CreateStudentModalProps {
     isOpen: boolean;
@@ -97,11 +38,10 @@ interface CreateStudentModalProps {
     onSuccess?: () => void;
 }
 
-export default function CreateStudentModal({isOpen, onClose, initialData, onSuccess} : CreateStudentModalProps) {
+export default function CreateStudentModal({ isOpen, onClose, initialData, onSuccess }: CreateStudentModalProps) {
 
-
-    // vairable for upload image
-    const [image, setImage] = useState<File | null>(null);
+    const { user } = useUser();
+    // variables for upload image
     const [url, setUrl] = useState<string>("");
     const [uploading, setUploading] = useState<boolean>(false);
     const [error, setError] = useState<string>("");
@@ -111,7 +51,6 @@ export default function CreateStudentModal({isOpen, onClose, initialData, onSucc
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            setImage(file);
             setError("");
             setUploading(true);
             setUploadProgress(0);
@@ -121,22 +60,22 @@ export default function CreateStudentModal({isOpen, onClose, initialData, onSucc
                 // Upload with progress
                 const uploadTask = uploadBytesResumable(storageRef, file);
                 uploadTask.on(
-                  "state_changed",
-                  (snapshot) => {
-                    const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-                    setUploadProgress(percent);
-                  },
-                  (err) => {
-                    setError("Failed to upload image: " + err.message);
-                    setUploading(false);
-                  },
-                  async () => {
-                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                    setUrl(downloadURL);
-                    setProfileUrl(downloadURL);
-                    setUploading(false);
-                    setUploadProgress(100);
-                  }
+                    "state_changed",
+                    (snapshot) => {
+                        const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                        setUploadProgress(percent);
+                    },
+                    (err) => {
+                        setError("Failed to upload image: " + err.message);
+                        setUploading(false);
+                    },
+                    async () => {
+                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                        setUrl(downloadURL);
+                        setProfileUrl(downloadURL);
+                        setUploading(false);
+                        setUploadProgress(100);
+                    }
                 );
             } catch (err: any) {
                 setError("Failed to upload image: " + err.message);
@@ -146,24 +85,24 @@ export default function CreateStudentModal({isOpen, onClose, initialData, onSucc
     };
 
 
-    const [firstName, setFirstName] = useState(initialData ?. firstName || "");
-    const [lastName, setLastName] = useState(initialData ?. lastName || "");
-    const [fullName, setFullName] = useState(initialData ?. name || "");
+    const [firstName, setFirstName] = useState(initialData?.firstName || "");
+    const [lastName, setLastName] = useState(initialData?.lastName || "");
+    const [fullName, setFullName] = useState(initialData?.name || "");
 
     const [openCalenda, setOpenCalenda] = React.useState(false)
-    const [dob, setDob] = useState < Date | undefined > (initialData ?. dob ? new Date(initialData.dob) : undefined);
-    const [address, setAddress] = useState(initialData ?. address || "");
-    const [parentPhone, setParentPhone] = useState(initialData ?. parentPhone || "");
-    const [profileUrl, setProfileUrl] = useState(initialData ?. profileUrl || "");
+    const [dob, setDob] = useState<Date | undefined>(initialData?.dob ? new Date(initialData.dob) : undefined);
+    const [address, setAddress] = useState(initialData?.address || "");
+    const [parentPhone, setParentPhone] = useState(initialData?.parentPhone || "");
+    const [profileUrl, setProfileUrl] = useState(initialData?.profileUrl || "");
     const [sex, setSex] = useState<"male" | "female">(initialData?.sex || "male");
-    const [classroomId, setClassroomId] = useState(initialData ?. classroomId || "");
-    const [termId, setTermId] = useState(initialData ?. termId || "");
-    const [status, setStatus] = useState < "active" | "inactive" > (initialData ?. status || "active");
+    const [classroom_id, setClassroom_id] = useState(initialData?.classroom_id || "");
+    const [term_id, setTerm_id] = useState(initialData?.term_id || "");
+    const [status, setStatus] = useState<"active" | "inactive">(initialData?.status || "active");
 
-    const [classrooms, setClassrooms] = useState < ClassroomType[] > ([]);
-    const [terms, setTerms] = useState < TermType[] > ([]);
+    const [classrooms, setClassrooms] = useState<ClassroomType[]>([]);
+    const [terms, setTerms] = useState<TermType[]>([]);
     const [loading, setLoading] = useState(false);
-    
+    const [id_number, setIdNumber] = useState<string>(initialData?.id_number?.toString() || "");
 
     // Update full name when first name or last name changes
     useEffect(() => {
@@ -172,11 +111,11 @@ export default function CreateStudentModal({isOpen, onClose, initialData, onSucc
     }, [firstName, lastName]);
 
     useEffect(() => {
-        
-        if (isOpen){ // Fetch terms
-            API.get("/terms").then((res) => setTerms(res.data || [])).catch(() => setTerms([]));
+
+        if (isOpen) { // Fetch terms
+            // API.get(`/terms?school_id=${user?.school_id}`).then((res) => setTerms(res.data || [])).catch(() => setTerms([]));
             // Fetch classrooms
-            API.get("/classrooms").then((res) => setClassrooms(res.data || [])).catch(() => setClassrooms([]));
+            // API.get(`/classrooms/term/${term_id}`).then((res) => setClassrooms(res.data || [])).catch(() => setClassrooms([]));
 
             // Reset form if not editing
             if (!initialData) {
@@ -188,10 +127,11 @@ export default function CreateStudentModal({isOpen, onClose, initialData, onSucc
                 setParentPhone("");
                 setProfileUrl("");
                 setSex("male");
-                setClassroomId("");
-                setTermId("");
+                setClassroom_id("");
+                setTerm_id("");
                 setStatus("active");
-            }else{
+                setIdNumber("");
+            } else {
                 setFirstName(initialData.firstName || "");
                 setLastName(initialData.lastName || "");
                 setFullName(initialData.name || "");
@@ -200,14 +140,15 @@ export default function CreateStudentModal({isOpen, onClose, initialData, onSucc
                 setParentPhone(initialData.parentPhone || "");
                 setProfileUrl(initialData.profileUrl || "");
                 setSex(initialData.sex || "male");
-                setClassroomId(initialData.classroomId || "");
-                setTermId(initialData.termId || "");
+                setClassroom_id(initialData.classroom_id || "");
+                setTerm_id(initialData.term_id || "");
                 setStatus(initialData.status || "active");
+                setIdNumber(initialData.id_number || "");
             }
         }
     }, [isOpen, initialData]);
 
-    const handleSubmit = async (e : React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
@@ -219,6 +160,12 @@ export default function CreateStudentModal({isOpen, onClose, initialData, onSucc
 
         if (!parentPhone.trim()) {
             toast.error("Parent phone is required");
+            setLoading(false);
+            return;
+        }
+
+        if (!id_number) {
+            toast.error("Student ID number is required");
             setLoading(false);
             return;
         }
@@ -235,19 +182,20 @@ export default function CreateStudentModal({isOpen, onClose, initialData, onSucc
             parentPhone: parentPhone.trim(), // Contact number for parent/guardian
             sex, // Gender of the student (male/female)
             status, // Current enrollment status (active/inactive)
-            classroomId: classroomId || undefined, // Current classroom assignment
-            termId: termId || undefined, // Current term assignment
+            school_id: user?.school_id || undefined,
+            classroom_id: classroom_id || undefined, // Current classroom assignment
+            term_id: term_id || undefined, // Current term assignment
+            id_number: id_number || undefined,
             enrollments: [{
-                termId: termId || undefined, // Term for this enrollment
-                classroomId: classroomId || undefined, // Classroom for this enrollment
+                term_id: term_id || undefined, // Term for this enrollment
+                classroom_id: classroom_id || undefined, // Classroom for this enrollment
             }],
         };
 
         try {
             if (initialData) { // Update existing student
-                await API.put(`/students/${
-                    initialData._id
-                }`, data);
+                await API.put(`/students/${initialData._id
+                    }`, data);
                 toast.success("Student updated successfully");
             } else { // Create new student
                 await API.post("/students", data);
@@ -256,7 +204,7 @@ export default function CreateStudentModal({isOpen, onClose, initialData, onSucc
 
             // Close modal and refresh data
             onClose();
-            onSuccess ?. ();
+            onSuccess?.();
 
             // Reset form
             setFirstName("");
@@ -267,9 +215,11 @@ export default function CreateStudentModal({isOpen, onClose, initialData, onSucc
             setParentPhone("");
             setProfileUrl("");
             setSex("male");
-            setClassroomId("");
-            setTermId("");
+            setClassroom_id("");
+            setTerm_id("");
             setStatus("active");
+            setIdNumber("");
+            setUrl("");
         } catch (error) {
             console.error("Error saving student:", error);
             toast.error("Failed to save student");
@@ -295,7 +245,7 @@ export default function CreateStudentModal({isOpen, onClose, initialData, onSucc
                     {/* Avatar and Image Picker */}
                     <div className="flex items-center space-x-4">
                         <Avatar className="h-20 w-20 ring-2 ring-blue-200">
-                            <AvatarImage src={profileUrl || url} alt={fullName || "Student"} />
+                            <AvatarImage src={profileUrl || url} alt={fullName || "Student"} className="object-cover"/>
                             <AvatarFallback>{(firstName?.[0] || "").toUpperCase()}{(lastName?.[0] || "").toUpperCase()}</AvatarFallback>
                         </Avatar>
                         <div>
@@ -315,6 +265,33 @@ export default function CreateStudentModal({isOpen, onClose, initialData, onSucc
                             {error && <div className="text-xs text-red-600 mt-1">{error}</div>}
                         </div>
                     </div>
+                    <div>
+                        <label className="text-sm font-medium">លេខរៀងសិស្ស</label>
+
+                        <div className="flex gap-2">
+                            <Input placeholder="Id number"
+                                value={id_number}
+                                onChange={
+                                    (e) => {
+                                        const value = e.target.value;
+                                        setIdNumber(value);
+                                    }
+                                }
+                                className="mt-1 flex-1"
+                                type="number" />
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    const randomId = Math.floor(Math.random() * 900000) + 100000;
+                                    setIdNumber(randomId.toString());
+                                }}
+                                className="mt-1 px-3"
+                            >
+                                Generate
+                            </Button>
+                        </div>
+                    </div>
                     {/* Name Fields */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -324,7 +301,7 @@ export default function CreateStudentModal({isOpen, onClose, initialData, onSucc
                                 onChange={
                                     (e) => setFirstName(e.target.value)
                                 }
-                                className="mt-1"/>
+                                className="mt-1" />
                         </div>
                         <div>
                             <label className="text-sm font-medium">ឈ្មោះ</label>
@@ -333,7 +310,7 @@ export default function CreateStudentModal({isOpen, onClose, initialData, onSucc
                                 onChange={
                                     (e) => setLastName(e.target.value)
                                 }
-                                className="mt-1"/>
+                                className="mt-1" />
                         </div>
                     </div>
 
@@ -344,38 +321,37 @@ export default function CreateStudentModal({isOpen, onClose, initialData, onSucc
                             onChange={
                                 (e) => setFullName(e.target.value)
                             }
-                            className="mt-1"/>
+                            className="mt-1" />
                     </div>
 
                     ថ្ងៃខែឆ្នាំកំណើត
                     <div>
-                       
-                        <Popover open={openCalenda} onOpenChange={setOpenCalenda}>
-        <PopoverTrigger asChild className="mt-1">
-          <Button
-            variant="outline"
-            id="date"
-            className="w-48 justify-between font-normal"
-          >
-            {dob ? dob.toLocaleDateString() : "Select date"}
-            <ChevronDownIcon />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto overflow-hidden p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={dob}
-            captionLayout="dropdown"
-            onSelect={(date) => {
-              setDob(date)
-              setOpenCalenda(false)
-            }}
-          />
-          
-        </PopoverContent>
-      </Popover>
-                    </div>
+                        <Popover open={openCalenda} modal={true} onOpenChange={setOpenCalenda}>
+                            <PopoverTrigger asChild className="mt-1">
+                                <Button
+                                    variant="outline"
+                                    id="date"
+                                    className="w-48 justify-between font-normal"
+                                >
+                                    {dob ? dob.toLocaleDateString() : "Select date"}
+                                    <ChevronDownIcon />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={dob}
+                                    captionLayout="dropdown"
+                                    onSelect={(date) => {
+                                        setDob(date)
+                                        // setOpenCalenda(false)
+                                    }}
+                                />
 
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+                    
                     {/* Sex/Gender */}
                     <div>
                         <label className="text-sm font-medium">ភេទ</label>
@@ -398,10 +374,10 @@ export default function CreateStudentModal({isOpen, onClose, initialData, onSucc
                             onChange={
                                 (e) => setAddress(e.target.value)
                             }
-                            className="mt-1"/>
+                            className="mt-1" />
                     </div>
 
-                    {/* Parent Phone */}
+       
                     <div>
                         <label className="text-sm font-medium">លេខទូរស័ព្ទអណាព្យាបាល *</label>
                         <Input placeholder="Parent phone number"
@@ -410,57 +386,41 @@ export default function CreateStudentModal({isOpen, onClose, initialData, onSucc
                                 (e) => setParentPhone(e.target.value)
                             }
                             className="mt-1"
-                            required/>
+                            required />
                     </div>
-
-                    {/* Profile Image URL - removed manual input */}
 
                     {/* Term and Classroom Selection */}
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-sm font-medium">ឆ្នាំសិក្សា (Optional)</label>
-                            <Select value={termId}
-                                onValueChange={setTermId}>
+                        {/* <div>
+                            <label className="text-sm font-medium">ឆមាស</label>
+                            <Select value={term_id} onValueChange={setTerm_id}>
                                 <SelectTrigger className="w-full mt-1">
-                                    <SelectValue placeholder="Select term (optional)"/>
+                                    <SelectValue placeholder="Select term" />
                                 </SelectTrigger>
-                                <SelectContent> {
-                                    terms.map((term) => (
-                                        <SelectItem key={
-                                                term._id
-                                            }
-                                            value={
-                                                term._id
-                                        }>
-                                            {
-                                            term.year
-                                        } </SelectItem>
-                                    ))
-                                } </SelectContent>
+                                <SelectContent>
+                                    {terms.map((term) => (
+                                        <SelectItem key={term._id} value={term._id}>
+                                            {term.year}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
                             </Select>
-                        </div>
-                        <div>
-                            <label className="text-sm font-medium">បន្ទប់សិក្សា (Optional)</label>
-                            <Select value={classroomId}
-                                onValueChange={setClassroomId}>
+                        </div> */}
+                        {/* <div>
+                            <label className="text-sm font-medium">បន្ទប់សិក្សា</label>
+                            <Select value={classroom_id} onValueChange={setClassroom_id}>
                                 <SelectTrigger className="w-full mt-1">
-                                    <SelectValue placeholder="Select classroom (optional)"/>
+                                    <SelectValue placeholder="Select classroom" />
                                 </SelectTrigger>
-                                <SelectContent> {
-                                    classrooms.filter((classroom) => !termId || classroom.termId === termId).map((classroom) => (
-                                        <SelectItem key={
-                                                classroom._id
-                                            }
-                                            value={
-                                                classroom._id
-                                        }>
-                                            {
-                                            classroom.name
-                                        } </SelectItem>
-                                    ))
-                                } </SelectContent>
+                                <SelectContent>
+                                    {classrooms.map((classroom) => (
+                                        <SelectItem key={classroom._id} value={classroom._id}>
+                                            {classroom.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
                             </Select>
-                        </div>
+                        </div> */}
                     </div>
 
                     {/* Status */}
@@ -468,10 +428,10 @@ export default function CreateStudentModal({isOpen, onClose, initialData, onSucc
                         <label className="text-sm font-medium">ស្ថានភាព</label>
                         <Select value={status}
                             onValueChange={
-                                (value : "active" | "inactive") => setStatus(value)
-                        }>
+                                (value: "active" | "inactive") => setStatus(value)
+                            }>
                             <SelectTrigger className="w-full mt-1">
-                                <SelectValue/>
+                                <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="active">Active</SelectItem>
@@ -488,8 +448,8 @@ export default function CreateStudentModal({isOpen, onClose, initialData, onSucc
                         <Button type="submit"
                             disabled={loading}>
                             {
-                            loading ? "Saving..." : initialData ? "Update Student" : "Create Student"
-                        } </Button>
+                                loading ? "Saving..." : initialData ? "Update Student" : "Create Student"
+                            } </Button>
                     </DialogFooter>
                 </form>
             </DialogContent>

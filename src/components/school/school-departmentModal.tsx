@@ -10,29 +10,16 @@ import {
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { useUser } from "../../context/UserContext";
+import type { DepartmentType } from "../../types/Department";
 
 
-
-interface SchoolType {
-    _id: string;
-    name: string;
-    address: string;
-    createdAt: string;
-  }
-interface DepartmentType {
-    _id: string;
-    name: string;
-    schoolId: string;
-    createdAt: string;
-    school: SchoolType;
-  }
 
 
 
 interface DepartmentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit?: (data: { _id?: string; name: string;  schoolId?: string }) => void;
+  onSubmit?: (data: { _id?: string; name: string;  school_id?: string }) => void;
   initialData?: DepartmentType | null;
 }
 
@@ -43,13 +30,13 @@ export default function SchoolCreateDeparmentModal({
   initialData,
 }: DepartmentModalProps) {
   const [name, setName] = useState(initialData?.name || "");
-  const [schoolId, setSchoolId] = useState(initialData?.schoolId || "");
+  const [school_id, setSchool_id] = useState(initialData?.school_id || "");
   const { user } = useUser();
 
   useEffect(() => {
     if (isOpen) {
       setName(initialData?.name || "");
-      setSchoolId(initialData?.schoolId || user?.schoolId || "");
+      setSchool_id(initialData?.school_id || user?.school_id || "");
     }
   }, [isOpen, initialData]);
 
@@ -57,7 +44,7 @@ export default function SchoolCreateDeparmentModal({
     e.preventDefault();
     const _id = initialData?._id || `department-${Date.now()}`;
     // const schoolId = user?.schoolId || initialData?.schoolId;
-    onSubmit?.({ _id, name, schoolId });
+    onSubmit?.({ _id, name, school_id: school_id });
   };
 
   return (

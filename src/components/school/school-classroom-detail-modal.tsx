@@ -6,7 +6,7 @@ import {
   DialogFooter,
   DialogDescription,
   DialogClose,
-  DialogTrigger,
+  
 } from "../../components/ui/dialog";
 import { Button } from "../../components/ui/button";
 
@@ -28,80 +28,82 @@ import {
 } from "../../components/ui/table";
 import useFetchData from "../../hooks/useFetchData";
 import SchoolClassroomSessionModal from "./school-classroomSessionModal";
+import type { StudentType } from "../../types/Student";
+import type { ClassroomType } from "../../types/Classroom";
+import type { UserType } from "../../types/User";
+import type { SessionType } from "../../types/Session";
+import { useUser } from "../../context/UserContext";
+// export interface Enrollment {
+//   termId: string;
+//   classroomId: string;
+// }
 
+// export type StudentStatus = "active" | "inactive";
 
+// export interface StudentType {
+//   _id: string; // ✅ Matches MongoDB _id
+//   name: string;
+//   firstName?: string;
+//   lastName?: string;
+//   dob?: string; // ISO format string like "2025-06-19"
+//   address?: string;
+//   profileUrl?: string;
+//   parentPhone: string;
+//   sex?: "male" | "female";
+//   status?: StudentStatus;
+//   classroomId?: string; // current classroomId
+//   termId?: string; // current termId
+//   enrollments: Enrollment[];
+//   createdAt: string; // ISO string from MongoDB
+// }
 
-export interface Enrollment {
-  termId: string;
-  classroomId: string;
-}
+// interface TermType {
+//   _id: string;
+//   year: string;
+//   departmentId: string;
+//   createdAt: string;
+// }
 
-export type StudentStatus = "active" | "inactive";
+// interface GradeType {
+//   _id: string;
+//   name: string;
+//   termId: string;
+//   schoolId?: string;
+//   createdAt: string;
+//   term: TermType;
+// }
 
-export interface StudentType {
-  _id: string; // ✅ Matches MongoDB _id
-  name: string;
-  firstName?: string;
-  lastName?: string;
-  dob?: string; // ISO format string like "2025-06-19"
-  address?: string;
-  profileUrl?: string;
-  parentPhone: string;
-  sex?: "male" | "female";
-  status?: StudentStatus;
-  classroomId?: string; // current classroomId
-  termId?: string; // current termId
-  enrollments: Enrollment[];
-  createdAt: string; // ISO string from MongoDB
-}
+// interface TeacherType {
+//   id: string;
+//   name: string;
+//   email: string;
+//   role: string;
+//   schoolId?: string;
+//   classroomIds?: string[];
+// }
 
-interface TermType {
-  _id: string;
-  year: string;
-  departmentId: string;
-  createdAt: string;
-}
+// export interface SessionType {
+//   _id: string;
+//   subjectName: string;
+//   teacherId: string;
+//   sessionStartHour: string;
+//   sessionStartMin: string;
+//   sessionEndHour: string;
+//   sessionEndMin: string;
+//   sessionDay?: string; // Add sessionDay field
+// }
 
-interface GradeType {
-  _id: string;
-  name: string;
-  termId: string;
-  schoolId?: string;
-  createdAt: string;
-  term: TermType;
-}
-
-interface TeacherType {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  schoolId?: string;
-  classroomIds?: string[];
-}
-
-export interface SessionType {
-  _id: string;
-  subjectName: string;
-  teacherId: string;
-  sessionStartHour: string;
-  sessionStartMin: string;
-  sessionEndHour: string;
-  sessionEndMin: string;
-  sessionDay?: string; // Add sessionDay field
-}
-
-interface ClassroomType {
-  _id: string;
-  name: string;
-  gradeId: string;
-  termId: string;
-  createdAt: string;
-  grade: GradeType;
-  term: TermType;
-  studentIds: string[];
-  sessions: SessionType[];
-}
+// interface ClassroomType {
+//   _id: string;
+//   name: string;
+//   gradeId: string;
+//   termId: string;
+//   createdAt: string;
+//   grade: GradeType;
+//   term: TermType;
+//   studentIds: string[];
+//   sessions: SessionType[];
+// }
 
 interface ClassroomDetailModalProps {
   isOpen: boolean;
@@ -119,8 +121,9 @@ export default function SchoolClassroomDetailModal({
   classroom,
 }: ClassroomDetailModalProps) {
   if (!classroom) return null;
-  const { data: allStudents } = useFetchData<StudentType>("/students");
-  const { data: teachers } = useFetchData<TeacherType>("/users?role=teacher");
+  const { user } = useUser();
+  const { data: allStudents } = useFetchData<StudentType>(`/students/school/${user?.school_id}`);
+  const { data: teachers } = useFetchData<UserType>("/users?role=teacher");
   const [studentsByClassroom, setStudentsByClassroom] = useState<StudentType[]>([]);
   const [loading, setLoading] = useState(true);
   const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
@@ -148,8 +151,8 @@ export default function SchoolClassroomDetailModal({
   };
 
   // Function to get teacher name by ID
-  const getTeacherName = (teacherId: string) => {
-    const teacher = teachers?.find(t => t.id === teacherId);
+  const getTeacherName = (teacher_id: string) => {
+    const teacher = teachers?.find(t => t._id === teacher_id);
     return teacher?.name || 'Unknown Teacher';
   };
 
@@ -191,10 +194,10 @@ export default function SchoolClassroomDetailModal({
     return sessionsByDay;
   };
 
-  const fetchStudentsByClassroomAndTerm = async (classroomId: string, termId: string) => {
+  const fetchStudentsByClassroomAndTerm = async (classroom_id: string, term_id: string) => {
     try {
       setLoading(true);
-      const response = await API.get(`/students/classroom/${classroomId}/term/${termId}`);
+      const response = await API.get(`/students/classroom/${classroom_id}/term/${term_id}`);
       // Add null check for response data
       if (response.data && Array.isArray(response.data)) {
         setStudentsByClassroom(response.data);
@@ -214,16 +217,16 @@ export default function SchoolClassroomDetailModal({
   };
 
 
-  const handleStudentSelection = (studentId: string, isChecked: boolean) => {
-    if (!studentId) {
+  const handleStudentSelection = (student_id: string, isChecked: boolean) => {
+    if (!student_id) {
       console.warn("Attempted to select student with null/undefined ID");
       return;
     }
 
     if (isChecked) {
-      setSelectedStudentIds(prev => [...prev, studentId]);
+      setSelectedStudentIds(prev => [...prev, student_id]);
     } else {
-      setSelectedStudentIds(prev => prev.filter(id => id !== studentId));
+      setSelectedStudentIds(prev => prev.filter(id => id !== student_id));
     }
   };
   const handleDeleteSession = async () => {
@@ -248,16 +251,16 @@ export default function SchoolClassroomDetailModal({
     }
     try {
       await Promise.all(
-        selectedStudentIds.map((studentId) =>
-          API.put(`/students/${studentId}/classroom`, {
-            classroomId: classroom._id,
-            termId: classroom.term._id,
+        selectedStudentIds.map((student_id) =>
+          API.put(`/students/${student_id}/classroom`, {
+            classroom_id: classroom._id,
+            term_id: classroom.term!._id,
           })
         )
       );
 
       toast.success(`${selectedStudentIds.length} students added to classroom`);
-      fetchStudentsByClassroomAndTerm(classroom._id, classroom.term._id); // Refresh
+      fetchStudentsByClassroomAndTerm(classroom._id, classroom.term!._id); // Refresh
       handleStudentModalClose(); // Close modal
     } catch (error) {
       // console.error("Error adding students to classroom:", error);
@@ -276,9 +279,9 @@ export default function SchoolClassroomDetailModal({
 
   useEffect(() => {
 
-    if (isOpen) {
+    if (isOpen && classroom?._id && classroom?.term?._id) {
 
-      fetchStudentsByClassroomAndTerm(classroom?._id || '', classroom?.term?._id || '');
+      fetchStudentsByClassroomAndTerm(classroom._id, classroom.term._id);
 
     }
   }, [isOpen, classroom]);
@@ -574,7 +577,7 @@ export default function SchoolClassroomDetailModal({
 
                                   <div className="flex items-center gap-2">
                                     <UserIcon className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                                    <span className="text-sm text-gray-700 truncate">{getTeacherName(session.teacherId)}</span>
+                                    <span className="text-sm text-gray-700 truncate">{getTeacherName(session.teacher_id)}</span>
                                   </div>
                                   <div className="flex items-center gap-2">
                                     <Clock className="h-4 w-4 text-gray-500 flex-shrink-0" />
@@ -761,7 +764,7 @@ export default function SchoolClassroomDetailModal({
           (setOpenModalCreateSession(false));
           // refresh after adding
         }}
-        classroomId={classroom?._id || ''}
+        classroom_id={classroom?._id || ''}
       />
     </Dialog>
   );

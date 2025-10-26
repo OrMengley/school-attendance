@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "../../components/ui/button";
 import { Plus, Eye } from "lucide-react";
@@ -6,70 +7,14 @@ import StudentDetailModal from "../../components/school/school-student-detail-mo
 import DataTable from "../../components/school/data-table";
 import { toast } from "sonner";
 import API from "../../lib/axios";
+import type { StudentType } from "../../types/Student";
+import { useUser } from "../../context/UserContext"
 
 
-interface SessionType {
-  _id: string;
-  subjecName: string;
-  teacherId: string;
-  sessionHourStart:string;
-  sessionMinStart:string;
-  sessionHourEnd:string;
-  sessionMinEnd:string;
-}
-interface TermType {
-  _id: string;
-  year: string;
-  departmentId: string;
-  createdAt: string;
-}
-interface GradeType {
-  _id: string;
-  name: string;
-  termId: string;
-  schoolId?: string;
-  createdAt: string;
-  term: TermType;
-}
-interface ClassroomType {
-  _id: string;
-  name: string;
-  gradeId: string;
-  termId: string;
-  createdAt: string;
-  grade: GradeType;
-  studentIds:string[];
-  term: TermType;
-  sessions: SessionType[];
-}
 
-export interface Enrollment {
-  termId: string;
-  classroomId: string;
-}
-
-export type StudentStatus = "active" | "inactive";
-
-export interface StudentType {
-  _id: string; // ✅ Matches MongoDB _id
-  name: string;
-  firstName?: string;
-  lastName?: string;
-  dob?: string; // ISO format string like "2025-06-19"
-  address?: string;
-  profileUrl?: string;
-  parentPhone: string;
-  sex?: "male" | "female";
-  status?: StudentStatus;
-  classroomId?: string; // current classroomId
-  termId?: string; // current termId
-  enrollments: Enrollment[];
-  createdAt: string; // ISO string from MongoDB
-  classroom?: ClassroomType;
-  term?: TermType;
-}
 
 export default function SchoolStudent() {
+  const { user } = useUser();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<StudentType>(); // Using any for compatibility with CreateStudentModal
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -80,7 +25,7 @@ export default function SchoolStudent() {
   const fetchStudents = async () => {
     try {
       setLoading(true);
-      const response = await API.get("/students");
+      const response = await API.get(`/students/school/${user?.school_id}`);
       // Add null check for response data like SchoolClassroom
       if (response.data && Array.isArray(response.data)) {
         setStudents(response.data);
@@ -121,8 +66,8 @@ export default function SchoolStudent() {
       parentPhone: student.parentPhone || '',
       status: student.status || 'active',
       enrollments: student.enrollments || [],
-      classroomId: firstEnrollment?.classroomId || "",
-      termId: firstEnrollment?.termId || "",
+      classroom_id: firstEnrollment?.classroom_id || "",
+      term_id: firstEnrollment?.term_id || "",
       createdAt: student.createdAt || new Date().toISOString(),
     };
   };
@@ -149,7 +94,7 @@ export default function SchoolStudent() {
     }
     setIsDetailModalOpen(true);
     setSelectedStudentView(student);
-    console.log("student", selectedStudentView);
+
   };
 
   const handleCreateModalClose = () => {
@@ -239,7 +184,7 @@ export default function SchoolStudent() {
           );
         }}
       />
-
+      
       <CreateStudentModal
         isOpen={isCreateModalOpen}
         onClose={handleCreateModalClose}

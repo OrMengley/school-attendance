@@ -4,26 +4,28 @@ import { Button } from "../ui/button";
 import useFetchData from "../../hooks/useFetchData";
 import API from "../../lib/axios";
 import { toast } from "sonner";
+import type { UserType } from "../../types/User";
 const DAYS = [
   "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
 ];
-interface TeacherType {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  schoolId?: string;
-  classroomIds:string[];
-}
+// interface TeacherType {
+//   id: string;
+//   name: string;
+//   email: string;
+//   role: string;
+//   schoolId?: string;
+//   classroomIds:string[];
+// }
 
 interface DaySessionInputType {
   sessionDay: string;
   subjectName: string;
-  teacherId: string;
+  teacher_id: string;
   sessionStartHour: string;
   sessionStartMin: string;
   sessionEndHour: string;
   sessionEndMin: string;
+  sessionStatus?: "active" | "close";
 }
 
 interface DaySessions {
@@ -34,12 +36,12 @@ interface DaySessions {
 interface SchoolClassroomSessionModalProps {
     isOpenCreateSession: boolean;
     onCloseCreateSession: () => void;
-    classroomId: string;
+    classroom_id: string;
     
   }
 
-export default function SchoolClassroomSessionModal({isOpenCreateSession,onCloseCreateSession,classroomId}:SchoolClassroomSessionModalProps) {
-  const {data:teachers} = useFetchData<TeacherType>("/users?role=teacher");
+export default function SchoolClassroomSessionModal({isOpenCreateSession,onCloseCreateSession,classroom_id: classroom_id}:SchoolClassroomSessionModalProps) {
+  const {data:teachers} = useFetchData<UserType>("/users?role=teacher");
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [dayInputs, setDayInputs] = useState<Record<string, DaySessions>>({});
   const [loading, setLoading] = useState(false);
@@ -60,7 +62,7 @@ export default function SchoolClassroomSessionModal({isOpenCreateSession,onClose
         [day]: {
           qty: 1,
           sessions: [
-            {  subjectName: "", teacherId: "", sessionStartHour: "", sessionStartMin: "", sessionEndHour: "", sessionEndMin: "", sessionDay: day }
+            {  subjectName: "", teacher_id: "", sessionStartHour: "", sessionStartMin: "", sessionEndHour: "", sessionEndMin: "", sessionDay: day, sessionStatus: "active" }
           ]
         }
       }));
@@ -73,7 +75,7 @@ export default function SchoolClassroomSessionModal({isOpenCreateSession,onClose
       const prevSessions = inputs[day]?.sessions || [];
       let newSessions = prevSessions.slice(0, qty);
       while (newSessions.length < qty) {
-        newSessions.push({ sessionDay: day, subjectName: "", teacherId: "", sessionStartHour: "", sessionStartMin: "", sessionEndHour: "", sessionEndMin: "" });
+        newSessions.push({ sessionDay: day, subjectName: "", teacher_id: "", sessionStartHour: "", sessionStartMin: "", sessionEndHour: "", sessionEndMin: "", sessionStatus: "active" });
       }
       return {
         ...inputs,
@@ -101,9 +103,9 @@ export default function SchoolClassroomSessionModal({isOpenCreateSession,onClose
   };
   
   const handleFetchSessions = async () => {
-    if (!classroomId) return;
+    if (!classroom_id) return;
     try {
-      const response = await API.get(`/classrooms/${classroomId}/sessions`);
+      const response = await API.get(`/classrooms/${classroom_id}/sessions`);
       if (Array.isArray(response.data)) {
         setSessions(response.data);
         console.log("sessions", sessions);
@@ -128,16 +130,17 @@ export default function SchoolClassroomSessionModal({isOpenCreateSession,onClose
       const newSessions = selectedDays.flatMap(day =>
         (dayInputs[day]?.sessions || []).map(session => ({
           subjectName: session.subjectName,
-          teacherId: session.teacherId,
+          teacher_id: session.teacher_id,
           sessionStartHour: session.sessionStartHour,      // <-- use correct field name
           sessionStartMin: session.sessionStartMin,        // <-- use correct field name
           sessionEndHour: session.sessionEndHour,          // <-- use correct field name
           sessionEndMin: session.sessionEndMin,            // <-- use correct field name
-          sessionDay: day                     // <-- use correct field name
+          sessionDay: day,                     // <-- use correct field name
+          sessionStatus: session.sessionStatus || "active"  // Include session status
         }))
       );
 
-      await API.post(`/classrooms/${classroomId}/sessions`, newSessions);
+      await API.post(`/classrooms/${classroom_id}/sessions`, newSessions);
       setLoading(false);
       handleClearSession();
       onCloseCreateSession();
@@ -211,13 +214,13 @@ export default function SchoolClassroomSessionModal({isOpenCreateSession,onClose
                       <label className="block text-sm font-medium mb-1">Teacher</label>
                       <select
                         className="w-full border rounded px-3 py-2"
-                        value={session.teacherId}
-                        onChange={e => handleSessionInputChange(day, idx, "teacherId", e.target.value)}
+                        value={session.teacher_id}
+                        onChange={e => handleSessionInputChange(day, idx, "teacher_id", e.target.value)}
                         required
                       >
                         <option value="">Select teacher</option>
                         {teachers?.map(teacher => (
-                          <option key={teacher.id} value={teacher.id}>{teacher.name}</option>
+                          <option key={teacher._id} value={teacher._id}>{teacher.name}</option>
                         ))}
                       </select>
                     </div>
@@ -276,6 +279,18 @@ export default function SchoolClassroomSessionModal({isOpenCreateSession,onClose
                           placeholder="MM"
                         />
                       </div>
+                    </div>
+                    <div className="mb-2">
+                      <label className="block text-sm font-medium mb-1">Session Status</label>
+                      <select
+                        className="w-full border rounded px-3 py-2"
+                        value={session.sessionStatus || "active"}
+                        onChange={e => handleSessionInputChange(day, idx, "sessionStatus", e.target.value as "active" | "close")}
+                        required
+                      >
+                        <option value="active">Active</option>
+                        <option value="close">Close</option>
+                      </select>
                     </div>
                   </div>
                 ))}

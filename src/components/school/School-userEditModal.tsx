@@ -29,7 +29,8 @@ export interface EditUser {
   name: string;
   email: string;
   role: UserRole;
-  schoolId?: string;
+  school_id?: string;
+  status?: "active" | "inactive";
 }
 
 interface Props {
@@ -48,7 +49,8 @@ export default function SchoolUserEditModal({ open, onClose, user, onSaved }: Pr
   const [name, setName] = useState("");
   const [email, setEmail] = useState(""); // typically email is immutable; keep editable if you want
   const [role, setRole] = useState<UserRole>("parent");
-  const [schoolId, setSchoolId] = useState("");
+  const [school_id, setSchoolId] = useState("");
+  const [status, setStatus] = useState<"active" | "inactive">("active");
   const [saving, setSaving] = useState(false);
 
   // password reset
@@ -66,12 +68,13 @@ export default function SchoolUserEditModal({ open, onClose, user, onSaved }: Pr
       // if current is admin and the user being edited is admin/super_admin, clamp role to current allowed set
       const initialRole = allowedRoles.includes(user.role) ? user.role : "teacher";
       setRole(initialRole);
+      setStatus(user.status || "active");
       // prefill schoolId:
       if (isSchoolAdmin) {
         // force admin’s own schoolId (read-only)
-        setSchoolId(current?.schoolId || "");
+        setSchoolId(current?.school_id || "");
       } else {
-        setSchoolId(user.schoolId || "");
+        setSchoolId(user.school_id || "");
       }
       setNewPwd("");
     }
@@ -86,13 +89,13 @@ export default function SchoolUserEditModal({ open, onClose, user, onSaved }: Pr
     if (needsSchool) {
       if (isSchoolAdmin) {
         // must have current admin’s schoolId
-        return Boolean(current?.schoolId);
+        return Boolean(current?.school_id);
       }
       // super_admin path: schoolId must be filled for these roles
-      return Boolean(schoolId.trim());
+      return Boolean(school_id.trim());
     }
     return true;
-  }, [user, name, email, needsSchool, isSchoolAdmin, schoolId, current?.schoolId]);
+  }, [user, name, email, needsSchool, isSchoolAdmin, school_id, current?.school_id]);
 
   const canReset = useMemo(() => !!user?.id && newPwd.trim().length >= 6, [user, newPwd]);
 
@@ -104,12 +107,13 @@ export default function SchoolUserEditModal({ open, onClose, user, onSaved }: Pr
         name,
         email,
         role,
+        status,
       };
 
       if (needsSchool) {
-        payload.schoolId = isSchoolAdmin ? current?.schoolId : schoolId || undefined;
+        payload.school_id = isSchoolAdmin ? current?.school_id : school_id || undefined;
       } else {
-        payload.schoolId = undefined;
+        payload.school_id = undefined;
       }
 
       await API.put(`/users/${user.id}`, payload);
@@ -176,6 +180,17 @@ export default function SchoolUserEditModal({ open, onClose, user, onSaved }: Pr
             )}
           </div>
 
+          <div className="grid gap-2">
+            <Label>ស្ថានភាព (Status)</Label>
+            <Select value={status} onValueChange={(v) => setStatus(v as "active" | "inactive")}>
+              <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* School field behavior:
               - Admin editor: show locked/readonly school (their own).
               - Super_admin: editable when role requires school. */}
@@ -185,7 +200,7 @@ export default function SchoolUserEditModal({ open, onClose, user, onSaved }: Pr
                 <div className="grid gap-1">
                   <Label>សាលា</Label>
                   <div className="px-3 py-2 rounded bg-gray-50 border text-sm">
-                    {current?.schoolId || "—"}
+                    {current?.school_id || "—"}
                   </div>
                   <p className="text-xs text-gray-500">Admin នឹងកំណត់អ្នកប្រើនៅសាលារបស់ខ្លួនដោយស្វ័យប្រវត្តិ។</p>
                 </div>
@@ -194,7 +209,7 @@ export default function SchoolUserEditModal({ open, onClose, user, onSaved }: Pr
                   <Label htmlFor="school">សាលា (School ID)</Label>
                   <Input
                     id="school"
-                    value={schoolId}
+                    value={school_id}
                     onChange={(e) => setSchoolId(e.target.value)}
                     placeholder="school-001"
                   />

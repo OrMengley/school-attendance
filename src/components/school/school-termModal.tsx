@@ -18,35 +18,16 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 
 import API from "../../lib/axios";
+import type { TermType } from "../../types/Term";
+import type { DepartmentType } from "../../types/Department";
 
 
-interface SchoolType {
-    _id: string;
-    name: string;
-    address: string;
-    createdAt: string;
-  }
-
-  interface DepartmentType {
-    _id: string;
-    name: string;
-    schoolId: string;
-    createdAt: string;
-    school: SchoolType;
-  }
-interface TermType {
-    _id: string;
-    year: string;
-    departmentId: string;
-    createdAt: string;
-    department: DepartmentType;
-  }
 
 
 interface TermModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit?: (data: { _id?: string; year: string;  departmentId?: string }) => void;
+  onSubmit?: (data: { _id?: string; year: string;  department_id?: string }) => void;
   initialData?: TermType | null;
 }
 
@@ -57,14 +38,14 @@ export default function SchoolCreateTermModal({
   initialData,
 }: TermModalProps) {
   const [year, setYear] = useState(initialData?.year || "");
-  const [departmentId, setDepartmentId] = useState<string | undefined>(initialData?.departmentId || "");
+  const [department_id, setDepartment_id] = useState<string | undefined>(initialData?.department_id || "");
   const [departments, setDepartments] = useState<DepartmentType[]>([]);
   
 
   useEffect(() => {
     if (isOpen) {
       setYear(initialData?.year || "");
-      setDepartmentId(initialData?.departmentId || "");
+      setDepartment_id(initialData?.department_id || "");
       API.get("/departments")
       .then((res) => setDepartments(res.data || []))
       .catch(() => setDepartments([]));
@@ -74,10 +55,10 @@ export default function SchoolCreateTermModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const _id = initialData?._id || `term-${Date.now()}`;
-    onSubmit?.({ _id, year: year, departmentId: departmentId || "" });
+    onSubmit?.({ _id, year: year, department_id: department_id || "" });
    
   };
-
+  
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
@@ -92,7 +73,7 @@ export default function SchoolCreateTermModal({
             onChange={(e) => setYear(e.target.value)}
             required
           />
-          <Select value={departmentId} onValueChange={setDepartmentId} required>
+          <Select value={department_id} onValueChange={setDepartment_id} required>
             <SelectTrigger>
               <SelectValue placeholder="Select Department" />
             </SelectTrigger>
