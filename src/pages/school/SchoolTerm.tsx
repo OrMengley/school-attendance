@@ -6,6 +6,7 @@ import { Button } from "../../components/ui/button";
 import SchoolCreateTermModal from "../../components/school/school-termModal";
 import API from "../../lib/axios";
 import { Edit } from "lucide-react";
+import { getCurrentUser } from "../../utils/auth";
 
 interface SchoolType {
   _id: string;
@@ -17,7 +18,7 @@ interface SchoolType {
 interface DepartmentType {
   _id: string;
   name: string;
-  schoolId: string;
+  school_id: string;
   createdAt: string;
   school: SchoolType;
 }
@@ -25,13 +26,14 @@ interface DepartmentType {
 interface TermType {
   _id: string;
   year: string;
-  departmentId: string;
+  department_id: string;
   createdAt: string;
   department: DepartmentType;
 }
 
 export default function TermPage() {
-  const { data: terms, loading, refetch } = useFetchData<TermType>("/terms");
+  const user = getCurrentUser()
+  const { data: terms, loading, refetch } = useFetchData<TermType>(`/terms?school_id=${user?.school_id}`);
   const [isModalOpen, setIsModalOpen] = useState(false);
   // const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   // const [selectedTerm, setSelectedTerm] = useState<TermType | null>(null);

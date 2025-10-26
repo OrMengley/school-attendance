@@ -2,8 +2,8 @@ import type { ClassroomType } from "./Classroom";
 import type { TermType } from "./Term";
 
 export interface Enrollment {
-    termId: string;
-    classroomId: string;
+    term_id: string;
+    classroom_id: string;
   }
 export type StudentStatus = "active" | "inactive";
 
@@ -23,5 +23,7 @@ export interface StudentType {
     enrollments: Enrollment[];
     createdAt: string; // ISO string from MongoDB
     classroom?: ClassroomType;
+    school_id?: string;
+    id_number?: string;
     term?: TermType;
   }

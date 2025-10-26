@@ -9,19 +9,30 @@ import { Button } from "../../../components/ui/button";
 import { Loader2 } from "lucide-react";
 import { fmtTime, khStatus } from "../../../types/att";
 import { Badge } from "../../../components/ui/badge";
-
+import { useUser } from "../../../context/UserContext";
 
 import type {AttendanceType} from "../../../types/Attendance";
 import type {ClassroomType} from "../../../types/Classroom";
 import type {StudentType} from "../../../types/Student";
+import type { DepartmentType } from "../../../types/Department";
+import useFetchData from "../../../hooks/useFetchData";
+import type { TermType } from "../../../types/Term";
 
 export default function ReportDailyAttendance() {
+  const { user } = useUser();
   // Get today's date in YYYY-MM-DD format
   const today = new Date().toISOString().slice(0, 10);
   
+  
   // Initialize date state with today's date
   const [date, setDate] = useState<string>(today);
+  // const [departments, setDepartments] = useState<DepartmentType[]>([]);
+  const { data: departments } = useFetchData<DepartmentType>(`/departments/school/${user?.school_id}`);
+  const [department_id, setDepartment_id] = useState<string>("");
+  const { data: terms } = useFetchData<TermType>(`/terms/department/${department_id}`);
   const [classroom_id, setClassroom_id] = useState<string>("");
+  const [term_id, setTerm_id] = useState<string>("");
+
   const [classrooms, setClassrooms] = useState<ClassroomType[]>([]);
   const [rows, setRows] = useState<AttendanceType[]>([]);
   const [students, setStudents] = useState<StudentType[]>([]);
@@ -84,7 +95,16 @@ export default function ReportDailyAttendance() {
     setClassroom_id(newClassroom_id);
     setError(null); // Clear previous errors when classroom changes
   };
-
+  const handleChangeDepartment = (newDepartment_id: string) => {
+    console.log(`Department changed to: ${newDepartment_id}`);
+    setDepartment_id(newDepartment_id);
+    setError(null); // Clear previous errors when department changes
+  };
+  const handleChangeTerm = (newTerm_id: string) => {
+    console.log(`Term changed to: ${newTerm_id}`);
+    setTerm_id(newTerm_id);
+    setError(null); // Clear previous errors when term changes
+  };
   useEffect(() => {
     (async () => {
       try {
@@ -98,8 +118,7 @@ export default function ReportDailyAttendance() {
             if (Array.isArray(u?.classroomIds)) allowedIds = u.classroomIds as string[];
           } catch {}
         }
-
-        const cls = await API.get<ClassroomType[]>("/classrooms");
+        const cls = await API.get<ClassroomType[]>(`/classrooms/school/${localStorage.getItem("school_id")}`);
         const all = Array.isArray(cls.data) ? cls.data : [];
         const filtered = allowedIds.length ? all.filter(c => allowedIds.includes(c._id)) : all;
         setClassrooms(filtered);
@@ -153,18 +172,33 @@ export default function ReportDailyAttendance() {
             </div>
           )}
           <div className="grid grid-cols-2 gap-2">
-            <Input 
-              type="date" 
-              value={date} 
-              onChange={(e) => handleDateChange(e.target.value)}
-              max={today} // Don't allow future dates
-            />
+            
+            <Select value={department_id} onValueChange={handleChangeDepartment}>
+              <SelectTrigger><SelectValue placeholder="ជ្រើសរើស ឌីប៉ាត់ដឺម៉ង់" /></SelectTrigger>
+              <SelectContent>
+                {departments.map(department=> <SelectItem key={department._id} value={department._id}>{department.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            
+            <Select value={term_id} onValueChange={handleChangeTerm}>
+              <SelectTrigger><SelectValue placeholder="ជ្រើសរើស ឆ្នាំសិក្សា" /></SelectTrigger>
+              <SelectContent>
+                {terms.map(term=> <SelectItem key={term._id} value={term._id}>{term.year}</SelectItem>)}
+              </SelectContent>
+            </Select>
             <Select value={classroom_id} onValueChange={handleClassroomChange}>
               <SelectTrigger><SelectValue placeholder="ជ្រើសរើសបន្ទប់" /></SelectTrigger>
               <SelectContent>
                 {classrooms.map(c=> <SelectItem key={c._id} value={c._id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
+            <Input 
+              type="date" 
+              value={date} 
+              onChange={(e) => handleDateChange(e.target.value)}
+              max={today} // Don't allow future dates
+            />
+            
           </div>
 
           <div className="rounded-md border overflow-hidden">

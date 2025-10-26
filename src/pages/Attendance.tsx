@@ -2,16 +2,30 @@ import { useEffect, useState } from "react";
 import API from "../lib/axios";
 import type { ClassroomType } from "../types/Classroom";
 import type { StudentType } from "../types/Student";
-
+// import { useUser } from "../context/UserContext";
 
 
 export default function AttendancePage() {
+  // const { user } = useUser();
   const [classrooms, setClassrooms] = useState<ClassroomType[]>([]);
   const [selectedClassroom, setSelectedClassroom] = useState("");
   const [students, setStudents] = useState<StudentType[]>([]);
   const [loading, setLoading] = useState(false);
-
+  // const [terms, setTerms] = useState<any[]>([]);
+  // const fetchTerms = async () => {
+  //           try {
+  //               const res = await API.get(`/terms?school_id=${user?.school_id}`);
+  //               console.log("Terms data:", res.data);
+  //               if (res.data && Array.isArray(res.data)) {
+  //                   setTerms(res.data);
+  //               }
+  //           } catch (error) {
+  //               console.error("Error fetching terms:", error);
+  //               setTerms([]);
+  //           }
+  //       };`
   useEffect(() => {
+    // fetchTerms();
     API.get("/classrooms")
       .then((res) => setClassrooms(res.data))
       .catch(() => alert("Failed to fetch classrooms"));
@@ -22,7 +36,7 @@ export default function AttendancePage() {
     setLoading(true);
     API.get("/students") // fetch all and filter (until API supports ?classroomId=...)
       .then((res) => {
-        const filtered = res.data.filter((s: StudentType) => s.classroomId === selectedClassroom);
+        const filtered = res.data.filter((s: StudentType) => s.classroom_id === selectedClassroom);
         setStudents(filtered);
       })
       .catch(() => alert("Failed to fetch students"))

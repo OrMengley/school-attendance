@@ -5,31 +5,105 @@ import useFetchData from "../../hooks/useFetchData";
 import {Button} from "../../components/ui/button";
 import SchoolCreateGradeModal from "../../components/school/school-gradeModal";
 import API from "../../lib/axios";
+import type { TermType } from "../../types/Term";
+import type { GradeType } from "../../types/Grade";
+import type { DepartmentType } from "../../types/Department";
+import { useUser } from "../../context/UserContext";
 
-interface TermType {
-    _id?: string;
-    id?: string;
-    year: string;
-}
 
-interface GradeType {
-    _id: string;
-    name: string;
-    termId: string;
-    schoolId?: string;
-    createdAt: string;
-    term: TermType;
-}
 
 export default function SchoolGrade() {
-    const {data: grades, loading: loadingGrades, refetch} = useFetchData < GradeType > ("/grades");
-    const {data: terms, loading: loadingTerms} = useFetchData < TermType > ("/terms");
+    const { user } = useUser();
+    // 
+    const {data: grades, refetch} = useFetchData < GradeType > ("/grades");
+    const [terms , setTerms] = useState < TermType[] > ([]);
+    const [departments, setDepartments] = useState < DepartmentType[] > ([]);
+    
     const [termMap, setTermMap] = useState < Record < string,
+        string >> ({});
+    const [departmentMap, setDepartmentMap] = useState < Record < string,
         string >> ({});
     const [modalOpen, setModalOpen] = useState(false);
     const [editData, setEditData] = useState<GradeType | null>(null);
 
-    const handleOpenCreate = () => {
+   
+    
+    useEffect(() => {
+        if (grades && Array.isArray(grades) && grades.length > 0) {
+            console.log("Grades data:", grades);
+            console.log("Term map for grades:", termMap);
+        }
+    }, [grades, termMap]);
+    
+    useEffect(() => {
+        const fetchTerms = async () => {
+            try {
+                const res = await API.get(`/terms?school_id=${user?.school_id}`);
+                console.log("Terms data:", res.data);
+                if (res.data && Array.isArray(res.data)) {
+                    setTerms(res.data);
+                }
+            } catch (error) {
+                console.error("Error fetching terms:", error);
+                setTerms([]);
+            }
+        };
+
+        const fetchDepartments = async () => {
+            try {
+                const res = await API.get(`/departments?school_id=${user?.school_id}`);
+                console.log("Departments data:", res.data);
+                if (res.data && Array.isArray(res.data)) {
+                    setDepartments(res.data);
+                }
+            } catch (error) {
+                console.error("Error fetching departments:", error);
+                setDepartments([]);
+            }
+        };
+
+        if (user?.school_id) {
+            fetchTerms();
+            fetchDepartments();
+        }
+    }, [user?.school_id]);
+
+    // Create term mapping whenever terms data changes
+    useEffect(() => {
+        if (terms && Array.isArray(terms) && terms.length > 0) {
+            console.log("Creating term map from terms:", terms);
+            const map: Record<string, string> = {};
+            terms.forEach((term) => {
+                const term_id = term._id;
+                if (term_id) {
+                    map[term_id] = term.year;
+                }
+            });
+            console.log("Term map:", map);
+            setTermMap(map);
+        }
+    }, [terms]);
+
+    // Create department mapping whenever departments data changes
+    useEffect(() => {
+        if (departments && Array.isArray(departments) && departments.length > 0) {
+            console.log("Creating department map from departments:", departments);
+            const map: Record<string, string> = {};
+            departments.forEach((department) => {
+                const department_id = department._id;
+                if (department_id) {
+                    map[department_id] = department.name;
+                }
+            });
+            console.log("Department map:", map);
+            setDepartmentMap(map);
+        }
+    }, [departments]);
+
+   
+
+
+     const handleOpenCreate = () => {
         setEditData(null);
         setModalOpen(true);
     };
@@ -39,7 +113,7 @@ export default function SchoolGrade() {
         setModalOpen(true);
     };
 
-    const handleSubmitGrade = async (data: { _id?: string; name: string; termId: string; schoolId?: string }) => {
+    const handleSubmitGrade = async (data: { _id?: string; name: string; term_id?: string; school_id?: string , department_id?: string }) => {
         try {
             if (editData) {
                 // Update existing grade
@@ -57,7 +131,6 @@ export default function SchoolGrade() {
             toast.error("Failed to save grade");
         }
     };
-
     const handleDeleteGrades = async (ids : string[]) => {
         try {
 
@@ -73,42 +146,18 @@ export default function SchoolGrade() {
         }
     };
 
-    useEffect(() => {
-        if (terms && terms.length > 0) {
-            console.log("Terms data:", terms);
-            const map: Record < string,
-                string > = {};
-            terms.forEach((term) => { // Use either _id or id depending on what's available
-                const termId = term._id || term.id;
-                if (termId) {
-                    map[termId] = term.year;
-                }
-            });
-            console.log("Term map:", map);
-            setTermMap(map);
-        }
-    }, [terms]);
-
-    useEffect(() => {
-        if (grades && grades.length > 0) {
-            console.log("Grades data:", grades);
-            console.log("Term map for grades:", termMap);
-        }
-    }, [grades, termMap]);
-
-    const mappedGrades = grades.map((g) => ({
+    const mappedGrades = (grades || []).map((g) => ({
         ...g,
-        termYear: termMap[g.termId] || "Unknown"
+        termYear: termMap[g.term_id] || "Unknown",
+        departmentName: departmentMap[g.department_id] || "Unknown"
     }));
-
-    if (loadingGrades || loadingTerms) 
-        return <p>Loading grades...</p>;
+    
     
     return (
         <>
           <Button onClick={handleOpenCreate}>Create Grade</Button>
             <DataTable title="🎓 Grades"
-              key={grades.length}
+              key={(grades || []).length}
                 data={mappedGrades}
                 columns={
                     [
@@ -116,11 +165,11 @@ export default function SchoolGrade() {
                             label: "Name",
                             key: "name"
                         }, {
+                            label: "Department",
+                            key: "departmentName"
+                        }, {
                             label: "Term",
                             key: "termYear"
-                        }, {
-                            label: "Created",
-                            key: "createdAt"
                         },
                     ]
                 }
@@ -140,7 +189,7 @@ export default function SchoolGrade() {
               isOpen={modalOpen}
               onClose={() => setModalOpen(false)}
               onSubmit={handleSubmitGrade}
-              initialData={editData}
+            //   initialData={editData}
             />
         </>
     );

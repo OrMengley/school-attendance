@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import API from "../../lib/axios";
 import { useNavigate } from "react-router-dom";
 import useFetchData from "../../hooks/useFetchData";
@@ -6,18 +6,20 @@ import {  Clock } from "lucide-react";
 import SessionCard from "../../components/teacher/sessionCard";
 import type { ClassroomType } from "../../types/Classroom";
 import type { TermType } from "../../types/Term";
-
+import { useUser } from "../../context/UserContext";
 
 
 type FilterType = | "today" | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
 
 export default function TeacherDashboard() {
+    const { user } = useUser();
     const [classrooms, setClassrooms] = useState<ClassroomType[]>([]);
     const [studentsByClassroom, setStudentsByClassroom] = useState<Record<string,
         any[]>>({});
     const currentYear = new Date().getFullYear().toString();
-    const { data: terms } = useFetchData<TermType>("/terms");
+    const { data: terms } = useFetchData<TermType>(`/terms?school_id=${user?.school_id}`);
     const [filter, setFilter] = useState<FilterType>("today");
+    const refreshInterval = useRef<NodeJS.Timeout | null>(null);
     const DAY_LABELS: Record<string,
         string> = {
         today: "ថ្ងៃនេះ",
@@ -34,16 +36,9 @@ export default function TeacherDashboard() {
 
     const navigate = useNavigate();
 
-    useEffect(() => {
-        if (terms && terms.length > 0) {
-            const match = terms.find(t => t.year === currentYear);
-            if (match) {
-                setSelectedTermId(match._id);
-            } else {
-                setSelectedTermId("all"); // fallback if no matching term
-            }
-        }
-        const fetchClassrooms = async () => {
+    // Function to fetch classrooms and students data
+    const fetchClassrooms = async () => {
+        try {
             const res = await API.get("/classrooms?role=teacher");
             setClassrooms(res.data);
 
@@ -59,9 +54,35 @@ export default function TeacherDashboard() {
                 }
             }
             setStudentsByClassroom(allStudents);
-            console.log("studentsByClassroom :" ,allStudents)
-        };
+            console.log("studentsByClassroom :", allStudents);
+        } catch (error) {
+            console.error("Error fetching classrooms:", error);
+        }
+    };
+
+    useEffect(() => {
+        if (terms && terms.length > 0) {
+            const match = terms.find(t => t.year === currentYear);
+            if (match) {
+                setSelectedTermId(match._id);
+            } else {
+                setSelectedTermId("all"); // fallback if no matching term
+            }
+        }
+        
         fetchClassrooms();
+        
+        // Set up interval to refresh data every minute (60,000 milliseconds)
+        refreshInterval.current = setInterval(() => {
+            fetchClassrooms();
+        }, 60000);
+
+        // Clean up interval on component unmount
+        return () => {
+            if (refreshInterval.current) {
+                clearInterval(refreshInterval.current);
+            }
+        };
     },
         [terms]
     );

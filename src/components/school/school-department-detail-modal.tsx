@@ -8,21 +8,9 @@ import { Separator } from "../ui/separator";
 import { CalendarIcon, School2, Building2 } from "lucide-react";
 import { Avatar } from "../ui/avatar";
 import { format } from "date-fns";
+import type { DepartmentType } from "../../types/Department";
+import { DialogDescription } from "@radix-ui/react-dialog";
 
-interface SchoolType {
-  _id: string;
-  name: string;
-  address: string;
-  createdAt: string;
-}
-
-interface DepartmentType {
-  _id: string;
-  name: string;
-  schoolId: string;
-  createdAt: string;
-  school: SchoolType;
-}
 
 interface DepartmentDetailModalProps {
   isOpen: boolean;
@@ -40,6 +28,7 @@ export default function DepartmentDetailModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
+        <DialogDescription></DialogDescription>
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">Department Details</DialogTitle>
         </DialogHeader>
@@ -52,7 +41,7 @@ export default function DepartmentDetailModal({
             </Avatar>
             <div>
               <h2 className="text-2xl font-bold">{department.name}</h2>
-              <p className="text-sm text-muted-foreground">ID: {department._id}</p>
+              {/* <p className="text-sm text-muted-foreground">ID: {department._id}</p> */}
             </div>
           </div>
 

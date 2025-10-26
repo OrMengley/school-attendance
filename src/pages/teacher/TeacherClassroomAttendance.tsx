@@ -7,19 +7,13 @@ import { ArrowLeft } from "lucide-react";
 import { KeenIcon } from "../../components/ui/keenicon";
 import type {StudentType} from "../../types/Student";
 import type {ClassroomType} from "../../types/Classroom";
-
-
-
-
-
-
-
+// import { useUser } from "../../context/UserContext";
 type AttendanceStatus = "none" | "checkin" | "checkout";
 
-
 export default function TeacherClassroomAttendance() {
+  // const { user } = useUser();
   const location = useLocation();
-  const session_id = location.state?.sessionId || location.state?.session_id;
+  const session_id : string  = location.state?.sessionId || location.state?.session_id;
   const { id: classroom_id } = useParams();
   const [students, setStudents] = useState<StudentType[]>([]);
   const [currentClassroom, setCurrentClassroom] = useState<ClassroomType>();
@@ -51,10 +45,10 @@ export default function TeacherClassroomAttendance() {
 
     fetchStudents();
     fetchAttendance();
-  }, [classroom_id, currentClassroom?.term_id, session_id]);
+  }, [classroom_id, currentClassroom?.term_id, session_id.toString()]);
 
   // 🖱 Handle check-in/out
-  const handleAttendance = async (student_id: string, status: "checkin" | "checkout") => {
+  const handleAttendance = async (student_id: string, status: "checkin" | "checkout",) => {
     try {
       if (!teacher_id) {
         toast.error("Missing teacher ID");
@@ -69,6 +63,9 @@ export default function TeacherClassroomAttendance() {
         classroom_id: classroom_id,
         session_id: session_id,
         teacher_id: teacher_id,
+        department_id: currentClassroom?.department_id,
+        school_id: currentClassroom?.school_id,
+        term_id: currentClassroom?.term_id,
         status: status,
       });
       setAttendanceMap((prev) => {

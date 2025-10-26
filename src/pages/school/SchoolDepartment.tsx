@@ -8,20 +8,15 @@ import { useState } from "react";
 import { Button } from "../../components/ui/button";
 import API from "../../lib/axios";
 import { Eye, Edit } from "lucide-react";
+import type { DepartmentType } from "../../types/Department";
 
-interface SchoolType {
-  _id: string;
-  name: string;
-  address: string;
-  createdAt: string;
-}
-interface DepartmentType {
-  _id: string;
-  name: string;
-  schoolId: string;
-  createdAt: string;
-  school: SchoolType;
-}
+// interface SchoolType {
+//   _id: string;
+//   name: string;
+//   address: string;
+//   createdAt: string;
+// }
+
 
 export default function SchoolDepartment() {
   const { data: departments, loading, refetch } = useFetchData<DepartmentType>("/departments");
@@ -69,6 +64,9 @@ export default function SchoolDepartment() {
 
   if (loading) return <p>Loading departments...</p>;
 
+  // Handle null or undefined departments data
+  const departmentsData = departments || [];
+
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
@@ -79,11 +77,11 @@ export default function SchoolDepartment() {
       </div>
       
       <DataTable
-        key={departments.length}
-        data={departments.map((department) => {
+        key={departmentsData.length}
+        data={departmentsData.map((department) => {
           return ({
             ...department,
-            schoolName: department.school.name,
+            schoolName: department.school?.name || 'Unknown School',
             key: department._id,
           });
         })}

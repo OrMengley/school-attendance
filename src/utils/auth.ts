@@ -3,7 +3,7 @@ export type LoggedInUser = {
     name: string;
     email: string;
     role: "super_admin" | "admin" | "teacher" | "parent";
-    schoolId?: string;
+    school_id?: string;
   };
   
   export function getCurrentUser(): LoggedInUser | null {

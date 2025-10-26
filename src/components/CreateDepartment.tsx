@@ -9,7 +9,7 @@ interface School {
 
 export default function CreateDepartment() {
   const [name, setName] = useState("");
-  const [schoolId, setSchoolId] = useState("");
+  const [school_id, setSchool_id] = useState("");
   const [schools, setSchools] = useState<School[]>([]);
   const navigate = useNavigate();
 
@@ -22,7 +22,7 @@ export default function CreateDepartment() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await API.post("/departments", { name, schoolId });
+      await API.post("/departments", { name, schoolId: school_id });
       alert("Department created!");
       navigate("/schools");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -43,7 +43,7 @@ export default function CreateDepartment() {
           onChange={(e) => setName(e.target.value)}
           required
         />
-        <select value={schoolId} onChange={(e) => setSchoolId(e.target.value)} required>
+        <select value={school_id} onChange={(e) => setSchool_id(e.target.value)} required>
           <option value="">Select School</option>
           {schools.map((school) => (
             <option key={school._id} value={school._id}>

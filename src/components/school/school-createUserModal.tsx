@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import API from "../../lib/axios";
 import { toast } from "sonner";
 import { getCurrentUser } from "../../utils/auth";
-
+import type { SchoolType } from "../../types/SchoolType";
 type UserRole = "super_admin" | "admin" | "teacher" | "parent";
 
 interface Props {
@@ -26,22 +26,12 @@ export default function SchoolUserCreateModal({ open, onClose, onCreated }: Prop
   // default role choice depends on who is creating
   const [role, setRole] = useState<UserRole>(isSuperAdmin ? "admin" : "parent");
   const [password, setPassword] = useState("");
+  const [status, setStatus] = useState<"active" | "inactive">("active");
 
   // schoolId is auto from current admin; super_admin can type it
-  const [schoolId, setSchoolId] = useState("");
-
-  useEffect(() => {
-    if (!open) {
-      setName(""); setEmail(""); setPassword("");
-      setRole(isSuperAdmin ? "admin" : "parent");
-      setSchoolId(isSchoolAdmin ? (current?.schoolId || "") : "");
-      return;
-    }
-    // when opening, pre-fill admin's schoolId and lock the field
-    if (isSchoolAdmin) {
-      setSchoolId(current?.schoolId || "");
-    }
-  }, [open, isSchoolAdmin, isSuperAdmin]);
+  const [school_id, setSchool_id] = useState("");
+  const [schools, setSchools] = useState<SchoolType[]>([]);
+  const [loadingSchools, setLoadingSchools] = useState(false);
 
   // Allowed roles based on who is creating:
   // - super_admin -> can create admin (and optionally others)
@@ -50,11 +40,73 @@ export default function SchoolUserCreateModal({ open, onClose, onCreated }: Prop
 
   const needsSchool = role === "admin" || role === "teacher" || role === "parent";
 
+  useEffect(() => {
+    if (!open) {
+      setName(""); setEmail(""); setPassword("");
+      setRole(isSuperAdmin ? "admin" : "parent");
+      setStatus("active");
+      setSchool_id(isSchoolAdmin ? (current?.school_id || "") : "");
+      return;
+    }
+    // when opening, pre-fill admin's schoolId and lock the field
+    if (isSchoolAdmin) {
+      setSchool_id(current?.school_id || "");
+    }
+    
+    // Fetch schools for super_admin when role requires school
+    if (isSuperAdmin && needsSchool) {
+      setLoadingSchools(true);
+      API.get("/schools")
+        .then((res) => {
+          if (Array.isArray(res.data)) {
+            setSchools(res.data);
+          } else {
+            setSchools([]);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to fetch schools:', err);
+          setSchools([]);
+          toast.error("Failed to load schools");
+        })
+        .finally(() => {
+          setLoadingSchools(false);
+        });
+    }
+  }, [open, isSchoolAdmin, isSuperAdmin, needsSchool]);
+
+  // Fetch schools when role changes for super_admin
+  useEffect(() => {
+    if (isSuperAdmin && needsSchool && open) {
+      setLoadingSchools(true);
+      API.get("/schools")
+        .then((res) => {
+          if (Array.isArray(res.data)) {
+            setSchools(res.data);
+          } else {
+            setSchools([]);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to fetch schools:', err);
+          setSchools([]);
+          toast.error("Failed to load schools");
+        })
+        .finally(() => {
+          setLoadingSchools(false);
+        });
+    } else if (!needsSchool) {
+      setSchools([]);
+      setSchool_id("");
+    }
+  }, [role, needsSchool, isSuperAdmin, open]);
+
   const canSave = useMemo(() => {
     if (!name.trim() || !email.trim() || !password.trim()) return false;
-    if (needsSchool && !(isSchoolAdmin ? schoolId : schoolId.trim())) return false;
+    if (needsSchool && !(isSchoolAdmin ? school_id : school_id.trim())) return false;
+    if (isSuperAdmin && needsSchool && loadingSchools) return false;
     return true;
-  }, [name, email, password, needsSchool, isSchoolAdmin, schoolId]);
+  }, [name, email, password, needsSchool, isSchoolAdmin, school_id, isSuperAdmin, loadingSchools]);
 
   const handleCreate = async () => {
     try {
@@ -63,8 +115,9 @@ export default function SchoolUserCreateModal({ open, onClose, onCreated }: Prop
         email,
         password,
         role,
+        status,
         // if admin is creating, force their schoolId; otherwise use field (super_admin)
-        schoolId: needsSchool ? (isSchoolAdmin ? current?.schoolId : schoolId || undefined) : undefined,
+        school_id: needsSchool ? (isSchoolAdmin ? current?.school_id : school_id || undefined) : undefined,
       });
       toast.success("User created");
       onCreated?.();
@@ -112,6 +165,17 @@ export default function SchoolUserCreateModal({ open, onClose, onCreated }: Prop
             </Select>
           </div>
 
+          <div className="grid gap-2">
+            <Label>ស្ថានភាព (Status)</Label>
+            <Select value={status} onValueChange={(v) => setStatus(v as "active" | "inactive")}>
+              <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* super_admin: show editable schoolId when role needs it
               admin: hide input & show a readonly hint with their schoolId */}
           {needsSchool && (
@@ -120,14 +184,28 @@ export default function SchoolUserCreateModal({ open, onClose, onCreated }: Prop
                 <div className="grid gap-1">
                   <Label>សាលា (ចូលរួមដោយស្វ័យប្រវត្តិ)</Label>
                   <div className="px-3 py-2 rounded bg-gray-50 border text-sm">
-                    {current?.schoolId || "—"}
+                    {current?.school_id || "—"}
                   </div>
                   <p className="text-xs text-gray-500">Admin នេះនឹងបង្កើតអ្នកប្រើនៅក្នុងសាលាជាក់លាក់របស់ខ្លួន។</p>
                 </div>
               ) : (
                 <div className="grid gap-2">
-                  <Label htmlFor="school">សាលា (School ID)</Label>
-                  <Input id="school" value={schoolId} onChange={(e) => setSchoolId(e.target.value)} placeholder="school-001" />
+                  <Label htmlFor="school">សាលា (School)</Label>
+                  <Select value={school_id} onValueChange={setSchool_id} disabled={loadingSchools}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={loadingSchools ? "Loading schools..." : "Select school"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {schools.map((school) => (
+                        <SelectItem key={school._id} value={school._id}>
+                          {school.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {schools.length === 0 && !loadingSchools && (
+                    <p className="text-xs text-gray-500">No schools available. Please create a school first.</p>
+                  )}
                 </div>
               )}
             </>

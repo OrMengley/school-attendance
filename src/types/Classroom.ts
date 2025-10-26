@@ -8,9 +8,12 @@ export interface ClassroomType {
     name: string;
     grade_id: string;
     term_id: string;
+    school_id: string;
+    department_id: string;
     createdAt: string;
-    grade: GradeType;
-    studentIds:string[];
-    term: TermType;
-    sessions: SessionType[];
+    grade?: GradeType;
+    teacherIds?: string[];
+    studentIds?:string[];
+    term?: TermType;
+    sessions?: SessionType[];
   }

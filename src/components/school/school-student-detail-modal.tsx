@@ -12,67 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Badge } from "../../components/ui/badge";
 import { Separator } from "../ui/separator";
 import { Calendar, MapPin, Phone, User, CalendarDays, Building, GraduationCap } from "lucide-react";
-
-
-interface TermType {
-  _id: string;
-  year: string;
-  departmentId: string;
-  createdAt: string;
-}
-interface ClassroomType {
-  _id: string;
-  name: string;
-  gradeId: string;
-  termId: string;
-  createdAt: string;
-  grade: {
-      _id: string;
-      name: string;
-      termId: string;
-      schoolId?: string;
-      createdAt: string;
-      term: {
-          _id: string;
-          year: string;
-          departmentId: string;
-          createdAt: string;
-      };
-  };
-  term: {
-      _id: string;
-      year: string;
-      departmentId: string;
-      createdAt: string;
-  };
-}
-
-
-export interface Enrollment {
-  termId: string;
-  classroomId: string;
-}
-
-export type StudentStatus = "active" | "inactive";
-
-interface StudentType {
-  _id: string; // _id
-  name: string;
-  firstName?: string;
-  lastName?: string;
-  dob?: string; // Format: YYYY-MM-DD
-  address?: string;
-  profileUrl?: string;
-  parentPhone: string;
-  sex?: "male" | "female";
-  status?: StudentStatus;
-  classroomId?: string; // current classroomId
-  termId?: string; // current termId
-  createdAt?: string;
-  enrollments: Enrollment[];
-  classroom?: ClassroomType;
-  term?: TermType;
-}
+import type { StudentType } from "../../types/Student";
 
 
 
@@ -88,43 +28,34 @@ export default function StudentDetailModal({
   selectedStudent,
 }: StudentDetailModalProps) {
   const [student, setStudent] = useState<StudentType | null>(null);
+  
   useEffect(() => {
-    
     if (isOpen && selectedStudent) {
       setStudent(selectedStudent);
     }
   }, [isOpen, selectedStudent]);
 
-  console.log("student", selectedStudent);
-  
   if (!student) {
+    console.log(selectedStudent)
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Student Details</DialogTitle>
+            <DialogDescription>
+              {isOpen && selectedStudent ? "Loading student details..." : "Student not found"}
+            </DialogDescription>
           </DialogHeader>
           <div className="flex items-center justify-center py-8">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-              <p className="mt-2 text-sm text-gray-600">Loading student details...</p>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  if (!student) {
-    return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Student Details</DialogTitle>
-          </DialogHeader>
-          <div className="flex items-center justify-center py-8">
-            <div className="text-center">
-              <p className="text-gray-600">Student not found</p>
+              {isOpen && selectedStudent ? (
+                <>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+                  <p className="mt-2 text-sm text-gray-600">Loading student details...</p>
+                </>
+              ) : (
+                <p className="text-gray-600">Student not found</p>
+              )}
             </div>
           </div>
         </DialogContent>
@@ -134,8 +65,11 @@ export default function StudentDetailModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-xl border-0">
-        <DialogTitle>Student Details</DialogTitle>
         <DialogHeader>
+          <DialogTitle>Student Details</DialogTitle>
+          <DialogDescription>
+            Detailed information about the selected student
+          </DialogDescription>
           <div className="flex items-center space-x-4 pb-4 border-b border-gray-200">
             <Avatar className="h-28 w-28 ring-2 ring-blue-100 shadow">
               <AvatarImage className="object-cover" src={student.profileUrl} alt={student.name} />
@@ -210,7 +144,7 @@ export default function StudentDetailModal({
             </h3>
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-500"> លេខទូរស័ព្ទអាណាព្យាបាល (Parent Phone)</label>
-              <p className="text-base text-gray-800">{student.parentPhone}</p>
+              <p className="text-base text-gray-800">{student.parentPhone || "Not specified"}</p>
             </div>
           </div>
           <Separator />
@@ -268,7 +202,6 @@ export default function StudentDetailModal({
           </div>
         </div>
       </DialogContent>
-      <DialogDescription></DialogDescription>
     </Dialog>
   );
 } 

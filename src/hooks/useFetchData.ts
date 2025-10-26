@@ -11,9 +11,10 @@ export default function useFetchData<T>(url: string) {
     try {
       const res = await API.get(url);
       console.log(res.data);
-      setData(res.data);
+      // Ensure data is always an array, even if API returns null
+      setData(res.data || []);
     } catch (err) {
-      console.error("Fetch error:", err);
+      // console.error("Fetch error:", err);
       setData([]);
     } finally {
       setLoading(false);

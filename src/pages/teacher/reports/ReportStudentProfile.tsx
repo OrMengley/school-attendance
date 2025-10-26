@@ -6,7 +6,7 @@ import type {AttendanceType} from "../../../types/Attendance";
 import type {StudentType} from "../../../types/Student";
 import { fmtTime } from "../../../types/att";
 
-interface ReportStudentProfileProps { student_id: string }
+interface ReportStudentProfileProps { student_id?: string }
 
 export default function ReportStudentProfile({ student_id }: ReportStudentProfileProps) {
   const [rows, setRows] = useState<AttendanceType[]>([]);
