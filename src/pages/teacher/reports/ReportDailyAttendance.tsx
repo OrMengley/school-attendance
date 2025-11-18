@@ -23,13 +23,11 @@ export default function ReportDailyAttendance() {
   // Get today's date in YYYY-MM-DD format
   const today = new Date().toISOString().slice(0, 10);
   
-  
   // Initialize date state with today's date
   const [date, setDate] = useState<string>(today);
-  // const [departments, setDepartments] = useState<DepartmentType[]>([]);
-  const { data: departments } = useFetchData<DepartmentType>(`/departments/school/${user?.school_id}`);
+  const { data: departments, loading: departmentsLoading } = useFetchData<DepartmentType>(`/departments/school/${user?.school_id}`);
   const [department_id, setDepartment_id] = useState<string>("");
-  const { data: terms } = useFetchData<TermType>(`/terms/department/${department_id}`);
+  const { data: terms, loading: termsLoading } = useFetchData<TermType>(department_id ? `/terms/department/${department_id}` : "");
   const [classroom_id, setClassroom_id] = useState<string>("");
   const [term_id, setTerm_id] = useState<string>("");
 
@@ -73,6 +71,10 @@ export default function ReportDailyAttendance() {
       const status = e?.response?.status;
       if (status === 401 || status === 403) {
         setForbidden(true);
+      } else if (status === 400) {
+        setError("Invalid request. Please check your date and classroom selection.");
+      } else if (status === 404) {
+        setError("No attendance records found for the selected date and classroom.");
       } else {
         setError(e?.response?.data?.message || e?.message || "Failed to load attendance");
       }
@@ -109,6 +111,21 @@ export default function ReportDailyAttendance() {
     (async () => {
       try {
         setError(null);
+        // Reset classrooms when term changes
+        setClassrooms([]);
+        setClassroom_id("");
+        
+        // Only fetch classrooms if term_id is selected
+        if (!term_id) {
+          return;
+        }
+        
+        // Check if user is available
+        if (!user?._id) {
+          setError("User information not available");
+          return;
+        }
+        
         // Load user from localStorage to restrict classrooms by classroomIds
         const raw = localStorage.getItem("user");
         let allowedIds: string[] = [];
@@ -118,7 +135,9 @@ export default function ReportDailyAttendance() {
             if (Array.isArray(u?.classroomIds)) allowedIds = u.classroomIds as string[];
           } catch {}
         }
-        const cls = await API.get<ClassroomType[]>(`/classrooms/school/${localStorage.getItem("school_id")}`);
+        const cls = await API.get<ClassroomType[]>(`/classrooms/term/${term_id}/teacher/${user?._id}`);
+
+        // (`/classrooms/school/${localStorage.getItem("school_id")}`);
         const all = Array.isArray(cls.data) ? cls.data : [];
         const filtered = allowedIds.length ? all.filter(c => allowedIds.includes(c._id)) : all;
         setClassrooms(filtered);
@@ -128,6 +147,8 @@ export default function ReportDailyAttendance() {
           const defaultClassroomId = filtered[0]._id;
           setClassroom_id(defaultClassroomId);
           console.log(`Default classroom set to: ${defaultClassroomId}`);
+        } else {
+          setError("No classrooms found for the selected term");
         }
 
         const allStudents = await API.get<StudentType[]>("/students"); // or your teacher-scoped endpoint
@@ -135,12 +156,17 @@ export default function ReportDailyAttendance() {
       } catch (e: any) {
         console.error("Failed to load initial data", e);
         const status = e?.response?.status;
-        if (status === 401 || status === 403) setForbidden(true);
-        setError(e?.response?.data?.message || e?.message || "Failed to load data");
+        if (status === 401 || status === 403) {
+          setForbidden(true);
+        } else if (status === 400) {
+          setError("Invalid request. Please check your selections.");
+        } else {
+          setError(e?.response?.data?.message || e?.message || "Failed to load data");
+        }
       }
     })();
     // eslint-disable-next-line
-  }, []);
+  }, [term_id, user]);
 
   // Fetch attendance data whenever classroomId or date changes
   useEffect(() => {
@@ -148,7 +174,7 @@ export default function ReportDailyAttendance() {
       console.log(`useEffect triggered - classroomId: ${classroom_id}, date: ${date}`);
       fetchAttendanceData(date, classroom_id);
     }
-  }, [classroom_id, date]);
+  }, [classroom_id, date, user]);
 
   const studentName = (id: string) => students.find(s => s._id === id)?.name || "—";
   const statusClass = (s: "checkin" | "checkout") =>
@@ -173,20 +199,20 @@ export default function ReportDailyAttendance() {
           )}
           <div className="grid grid-cols-2 gap-2">
             
-            <Select value={department_id} onValueChange={handleChangeDepartment}>
+            <Select value={department_id} onValueChange={handleChangeDepartment} disabled={!departments.length}>
               <SelectTrigger><SelectValue placeholder="ជ្រើសរើស ឌីប៉ាត់ដឺម៉ង់" /></SelectTrigger>
               <SelectContent>
                 {departments.map(department=> <SelectItem key={department._id} value={department._id}>{department.name}</SelectItem>)}
               </SelectContent>
             </Select>
             
-            <Select value={term_id} onValueChange={handleChangeTerm}>
+            <Select value={term_id} onValueChange={handleChangeTerm} disabled={!department_id || !Array.isArray(terms) || !terms.length}>
               <SelectTrigger><SelectValue placeholder="ជ្រើសរើស ឆ្នាំសិក្សា" /></SelectTrigger>
               <SelectContent>
-                {terms.map(term=> <SelectItem key={term._id} value={term._id}>{term.year}</SelectItem>)}
+                {Array.isArray(terms) && terms.map(term=> <SelectItem key={term._id} value={term._id}>{term.year}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={classroom_id} onValueChange={handleClassroomChange}>
+            <Select value={classroom_id} onValueChange={handleClassroomChange} disabled={!classrooms.length}>
               <SelectTrigger><SelectValue placeholder="ជ្រើសរើសបន្ទប់" /></SelectTrigger>
               <SelectContent>
                 {classrooms.map(c=> <SelectItem key={c._id} value={c._id}>{c.name}</SelectItem>)}
