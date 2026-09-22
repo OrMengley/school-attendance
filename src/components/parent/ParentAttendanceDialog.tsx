@@ -136,7 +136,7 @@ export default function ParentAttendanceDialog({
                       </span>
                     </div>
                     <div className="text-gray-800">{fmtTime(timeToShow)}</div>
-                    <div className="text-gray-800">{classroomName(r.classroomId)}</div>
+                    <div className="text-gray-800">{classroomName(r.classroom_id)}</div>
                     
                   </div>
                 );

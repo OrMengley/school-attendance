@@ -4,6 +4,7 @@ export interface UserType {
     _id: string;
     name: string;
     email: string;
+    avatar_url?: string;
     status?: "active" | "inactive";
     password?: string; // optional (you won't use it in UI)
     role: "super_admin" | "admin" | "teacher" | "parent";

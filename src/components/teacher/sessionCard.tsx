@@ -1,6 +1,6 @@
 import { Badge } from "../ui/badge"
 import { KeenIcon } from "../../components/ui/keenicon";
-import type { StudentType } from "../school/school-classroom-detail-modal";
+import type { StudentType } from "../../types/Student";
 
 interface SessionCardProps {
     subjectName: string;

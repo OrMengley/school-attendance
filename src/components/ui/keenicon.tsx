@@ -40,7 +40,7 @@ export const KeenIcon: React.FC<KeenIconProps> = ({
     className
   );
 
-  const style: React.CSSProperties = {};
+  const style: React.CSSProperties & Record<string, any> = {};
   
   if (primaryColor || secondaryColor || secondaryOpacity !== 0.3) {
     if (primaryColor) {

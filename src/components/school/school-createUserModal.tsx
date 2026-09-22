@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../../components/ui/dialog";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -8,6 +8,10 @@ import API from "../../lib/axios";
 import { toast } from "sonner";
 import { getCurrentUser } from "../../utils/auth";
 import type { SchoolType } from "../../types/SchoolType";
+// Add Firebase imports
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { storage } from "../../firebase";
+
 type UserRole = "super_admin" | "admin" | "teacher" | "parent";
 
 interface Props {
@@ -20,6 +24,7 @@ export default function SchoolUserCreateModal({ open, onClose, onCreated }: Prop
   const current = getCurrentUser();
   const isSuperAdmin = current?.role === "super_admin";
   const isSchoolAdmin = current?.role === "admin";
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -27,6 +32,11 @@ export default function SchoolUserCreateModal({ open, onClose, onCreated }: Prop
   const [role, setRole] = useState<UserRole>(isSuperAdmin ? "admin" : "parent");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<"active" | "inactive">("active");
+
+  // Avatar states
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   // schoolId is auto from current admin; super_admin can type it
   const [school_id, setSchool_id] = useState("");
@@ -46,13 +56,17 @@ export default function SchoolUserCreateModal({ open, onClose, onCreated }: Prop
       setRole(isSuperAdmin ? "admin" : "parent");
       setStatus("active");
       setSchool_id(isSchoolAdmin ? (current?.school_id || "") : "");
+      // Reset avatar states
+      setAvatarFile(null);
+      setAvatarPreview(null);
+      setUploading(false);
       return;
     }
     // when opening, pre-fill admin's schoolId and lock the field
     if (isSchoolAdmin) {
       setSchool_id(current?.school_id || "");
     }
-    
+
     // Fetch schools for super_admin when role requires school
     if (isSuperAdmin && needsSchool) {
       setLoadingSchools(true);
@@ -108,14 +122,94 @@ export default function SchoolUserCreateModal({ open, onClose, onCreated }: Prop
     return true;
   }, [name, email, password, needsSchool, isSchoolAdmin, school_id, isSuperAdmin, loadingSchools]);
 
+  // Handle avatar file selection
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Check file type
+      const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/heic"];
+      if (!allowedTypes.includes(file.type.toLowerCase())) {
+        toast.error("Invalid file type. Please select a JPEG, JPG, PNG, or HEIC image.");
+        return;
+      }
+      
+      // Check file size (limit to 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("File size too large. Please select an image under 5MB.");
+        return;
+      }
+      
+      setAvatarFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle avatar click to trigger file input
+  const handleAvatarClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  // Remove avatar
+  const handleRemoveAvatar = () => {
+    setAvatarFile(null);
+    setAvatarPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  // Upload avatar to Firebase Storage
+  const uploadAvatar = async (): Promise<string | null> => {
+    if (!avatarFile) return null;
+    
+    setUploading(true);
+    try {
+      // Create a storage reference
+      const storageRef = ref(storage, `avatars/${Date.now()}_${avatarFile.name}`);
+      
+      // Upload file
+      const uploadTask = uploadBytesResumable(storageRef, avatarFile);
+      
+      // Wait for upload to complete and get download URL
+      await uploadTask;
+      const downloadURL = await getDownloadURL(storageRef);
+      return downloadURL;
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      toast.error("Failed to upload avatar");
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleCreate = async () => {
     try {
+      // Upload avatar first if file is selected
+      let avatarUrl: string | null | undefined = undefined;
+      if (avatarFile) {
+        avatarUrl = await uploadAvatar();
+        if (!avatarUrl) {
+          toast.error("Failed to upload avatar. Please try again.");
+          return;
+        }
+      }
+      
       await API.post("/users", {
         name,
         email,
         password,
         role,
         status,
+        avatar_url: avatarUrl,
         // if admin is creating, force their schoolId; otherwise use field (super_admin)
         school_id: needsSchool ? (isSchoolAdmin ? current?.school_id : school_id || undefined) : undefined,
       });
@@ -136,6 +230,60 @@ export default function SchoolUserCreateModal({ open, onClose, onCreated }: Prop
         </DialogHeader>
 
         <div className="space-y-4 py-2">
+          {/* Avatar Upload Section */}
+          <div className="grid gap-2">
+            <Label>Avatar</Label>
+            <div className="flex items-center gap-4">
+              <div 
+                className="relative w-16 h-16 rounded-full overflow-hidden cursor-pointer border-2 border-dashed border-gray-300 flex items-center justify-center"
+                onClick={handleAvatarClick}
+              >
+                {avatarPreview ? (
+                  <img 
+                    src={avatarPreview} 
+                    alt="Avatar preview" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="text-gray-400 text-xs text-center">Click to upload</div>
+                )}
+                {avatarPreview && (
+                  <button
+                    type="button"
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveAvatar();
+                    }}
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+              <div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".jpeg,.jpg,.png,.HEIC,.heic,image/jpeg,image/jpg,image/png,image/heic"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                />
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleAvatarClick}
+                  disabled={uploading}
+                >
+                  {uploading ? "Uploading..." : "Choose Image"}
+                </Button>
+                <p className="text-xs text-gray-500 mt-1">
+                  JPEG, JPG, PNG, HEIC (Max 5MB)
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="grid gap-2">
             <Label htmlFor="name">ឈ្មោះ</Label>
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" />
@@ -151,29 +299,30 @@ export default function SchoolUserCreateModal({ open, onClose, onCreated }: Prop
             <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
           </div>
 
-          <div className="grid gap-2">
-            <Label>តួនាទី (Role)</Label>
-            <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
-              <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
-              <SelectContent>
-                {roleOptions.map((r) => (
-                  <SelectItem key={r} value={r}>
-                    {r === "admin" ? "School Admin" : r.charAt(0).toUpperCase() + r.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid gap-2">
-            <Label>ស្ថានភាព (Status)</Label>
-            <Select value={status} onValueChange={(v) => setStatus(v as "active" | "inactive")}>
-              <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <Label className="pb-2">តួនាទី (Role)</Label>
+              <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
+                <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
+                <SelectContent>
+                  {roleOptions.map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {r === "admin" ? "School Admin" : r.charAt(0).toUpperCase() + r.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex-1">
+              <Label className="pb-2">ស្ថានភាព (Status)</Label>
+              <Select  value={status} onValueChange={(v) => setStatus(v as "active" | "inactive")}>
+                <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* super_admin: show editable schoolId when role needs it
@@ -183,10 +332,10 @@ export default function SchoolUserCreateModal({ open, onClose, onCreated }: Prop
               {isSchoolAdmin ? (
                 <div className="grid gap-1">
                   <Label>សាលា (ចូលរួមដោយស្វ័យប្រវត្តិ)</Label>
-                  <div className="px-3 py-2 rounded bg-gray-50 border text-sm">
+                  {/* <div className="px-3 py-2 rounded bg-gray-50 border text-sm">
                     {current?.school_id || "—"}
-                  </div>
-                  <p className="text-xs text-gray-500">Admin នេះនឹងបង្កើតអ្នកប្រើនៅក្នុងសាលាជាក់លាក់របស់ខ្លួន។</p>
+                  </div> */}
+                  {/* <p className="text-xs text-gray-500">Admin នេះនឹងបង្កើតអ្នកប្រើនៅក្នុងសាលាជាក់លាក់របស់ខ្លួន។</p> */}
                 </div>
               ) : (
                 <div className="grid gap-2">
@@ -214,8 +363,8 @@ export default function SchoolUserCreateModal({ open, onClose, onCreated }: Prop
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleCreate} disabled={!canSave}>
-            Create
+          <Button onClick={handleCreate} disabled={!canSave || uploading}>
+            {uploading ? "Uploading..." : "Create"}
           </Button>
         </DialogFooter>
       </DialogContent>

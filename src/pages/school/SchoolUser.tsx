@@ -1,5 +1,3 @@
-
-
 // src/pages/school/SchoolUser.tsx (or wherever your UserTable lives)
 import { useState } from "react";
 import useFetchData from "../../hooks/useFetchData";
@@ -11,16 +9,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Skeleton } from "../../components/ui/skeleton";
 import SchoolUserCreateModal from "../../components/school/school-createUserModal";
 import SchoolUserEditModal from "../../components/school/School-userEditModal";
+import UserDetail from "../../components/school/school_user_detail";
 import type { EditUser } from "../../components/school/School-userEditModal";
 import type {UserType} from "../../types/User";
-import { Users, Plus, Edit, School, Mail, UserCheck, UserX } from "lucide-react";
+import { Users, Plus, Edit, School, Mail, UserCheck, UserX, Eye } from "lucide-react";
 
 
 export default function UserTable() {
   const { data: users, loading, refetch } = useFetchData<UserType>("/users");
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
   const [editing, setEditing] = useState<UserType | null>(null);
+  const [viewingUser, setViewingUser] = useState<UserType | null>(null);
 
   if (loading) {
     return (
@@ -76,6 +77,11 @@ export default function UserTable() {
       .join('')
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  const handleViewDetail = (user: UserType) => {
+    setViewingUser(user);
+    setDetailOpen(true);
   };
 
   return (
@@ -137,8 +143,16 @@ export default function UserTable() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="h-10 w-10">
-                            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
-                              {getInitials(u.name)}
+                            <AvatarFallback className={`${u.avatar_url ? '' : 'bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold'}`}>
+                              {u.avatar_url ? (
+                                <img 
+                                  src={u.avatar_url} 
+                                  alt={u.name} 
+                                  className="h-full w-full object-cover alig"
+                                />
+                              ) : (
+                                getInitials(u.name)
+                              )}
                             </AvatarFallback>
                           </Avatar>
                           <div>
@@ -180,18 +194,29 @@ export default function UserTable() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setEditing(u);
-                            setEditOpen(true);
-                          }}
-                          className="gap-1 hover:bg-blue-50 hover:border-blue-200"
-                        >
-                          <Edit className="h-3 w-3" />
-                          Edit
-                        </Button>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleViewDetail(u)}
+                            className="gap-1 hover:bg-blue-50 hover:border-blue-200"
+                          >
+                            <Eye className="h-3 w-3" />
+                            View
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setEditing(u);
+                              setEditOpen(true);
+                            }}
+                            className="gap-1 hover:bg-blue-50 hover:border-blue-200"
+                          >
+                            <Edit className="h-3 w-3" />
+                            Edit
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -226,6 +251,14 @@ export default function UserTable() {
             : null
         }
         onSaved={refetch}
+      />
+
+      {/* Detail */}
+      <UserDetail
+      
+        user={viewingUser}
+        open={detailOpen}
+        onClose={() => setDetailOpen(false)}
       />
     </div>
   );

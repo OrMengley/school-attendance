@@ -119,6 +119,7 @@ function App() {
                   </RequireAuth>
                 }
               >
+                <Route index element={<SchoolDashboard />} />
                 <Route path="dashboard" element={<SchoolDashboard />} />
                 <Route path="term" element={<SchoolTerm />} />
                 <Route path="classroom" element={<SchoolClassroom />} />
@@ -147,6 +148,7 @@ function App() {
                   </RequireAuth>
                 }
               >
+                <Route index element={<SchoolPage />} />
                 <Route path="view/users" element={<UserPage />} />
                 <Route path="view/classroom" element={<UserPage />} />
                 <Route path="view/school" element={<SchoolPage />} />
