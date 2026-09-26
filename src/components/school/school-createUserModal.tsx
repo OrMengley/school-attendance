@@ -8,9 +8,7 @@ import API from "../../lib/axios";
 import { toast } from "sonner";
 import { getCurrentUser } from "../../utils/auth";
 import type { SchoolType } from "../../types/SchoolType";
-// Add Firebase imports
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { storage } from "../../firebase";
+import { uploadToCloudinary } from "../../lib/cloudinary";
 
 type UserRole = "super_admin" | "admin" | "teacher" | "parent";
 
@@ -166,25 +164,20 @@ export default function SchoolUserCreateModal({ open, onClose, onCreated }: Prop
     }
   };
 
-  // Upload avatar to Firebase Storage
+  // Upload avatar to Cloudinary
   const uploadAvatar = async (): Promise<string | null> => {
     if (!avatarFile) return null;
     
     setUploading(true);
     try {
-      // Create a storage reference
-      const storageRef = ref(storage, `avatars/${Date.now()}_${avatarFile.name}`);
-      
-      // Upload file
-      const uploadTask = uploadBytesResumable(storageRef, avatarFile);
-      
-      // Wait for upload to complete and get download URL
-      await uploadTask;
-      const downloadURL = await getDownloadURL(storageRef);
+      const downloadURL = await uploadToCloudinary(avatarFile, {
+        folder: "avatars",
+      });
       return downloadURL;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading avatar:", error);
-      toast.error("Failed to upload avatar");
+      const errMsg = error?.response?.data?.error?.message || error?.message || "Failed to upload avatar";
+      toast.error(`បរាជ័យក្នុងការផ្ទុកឡើងរូបភាព (Upload error): ${errMsg}`);
       return null;
     } finally {
       setUploading(false);
@@ -325,39 +318,26 @@ export default function SchoolUserCreateModal({ open, onClose, onCreated }: Prop
             </div>
           </div>
 
-          {/* super_admin: show editable schoolId when role needs it
-              admin: hide input & show a readonly hint with their schoolId */}
-          {needsSchool && (
-            <>
-              {isSchoolAdmin ? (
-                <div className="grid gap-1">
-                  <Label>សាលា (ចូលរួមដោយស្វ័យប្រវត្តិ)</Label>
-                  {/* <div className="px-3 py-2 rounded bg-gray-50 border text-sm">
-                    {current?.school_id || "—"}
-                  </div> */}
-                  {/* <p className="text-xs text-gray-500">Admin នេះនឹងបង្កើតអ្នកប្រើនៅក្នុងសាលាជាក់លាក់របស់ខ្លួន។</p> */}
-                </div>
-              ) : (
-                <div className="grid gap-2">
-                  <Label htmlFor="school">សាលា (School)</Label>
-                  <Select value={school_id} onValueChange={setSchool_id} disabled={loadingSchools}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={loadingSchools ? "Loading schools..." : "Select school"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {schools.map((school) => (
-                        <SelectItem key={school._id} value={school._id}>
-                          {school.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {schools.length === 0 && !loadingSchools && (
-                    <p className="text-xs text-gray-500">No schools available. Please create a school first.</p>
-                  )}
-                </div>
+          {/* super_admin: show editable school selector when role needs it; admin automatically assigns their own school */}
+          {needsSchool && !isSchoolAdmin && (
+            <div className="grid gap-2">
+              <Label htmlFor="school">សាលា (School)</Label>
+              <Select value={school_id} onValueChange={setSchool_id} disabled={loadingSchools}>
+                <SelectTrigger>
+                  <SelectValue placeholder={loadingSchools ? "Loading schools..." : "Select school"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {schools.map((school) => (
+                    <SelectItem key={school._id} value={school._id}>
+                      {school.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {schools.length === 0 && !loadingSchools && (
+                <p className="text-xs text-gray-500">No schools available. Please create a school first.</p>
               )}
-            </>
+            </div>
           )}
         </div>
 

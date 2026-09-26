@@ -10,6 +10,8 @@ interface School {
   _id: string;
   name: string;
   address: string;
+  logo_url?: string;
+  is_active?: boolean;
 }
 
 export default function Schools() {
@@ -145,12 +147,24 @@ export default function Schools() {
           
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {schools.map((school) => (
-              <Card key={school._id} className="hover:shadow-md transition-shadow cursor-pointer">
+              <Card key={school._id} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <School className="h-5 w-5 text-primary" />
-                    {school.name}
-                  </CardTitle>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg border bg-muted/30 flex items-center justify-center overflow-hidden shrink-0">
+                      {school.logo_url ? (
+                        <img
+                          src={school.logo_url}
+                          alt={school.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <School className="h-5 w-5 text-primary" />
+                      )}
+                    </div>
+                    <CardTitle className="text-lg truncate">
+                      {school.name}
+                    </CardTitle>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-start gap-2 text-sm text-muted-foreground">

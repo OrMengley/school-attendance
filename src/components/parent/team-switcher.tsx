@@ -1,13 +1,11 @@
 import * as React from "react"
-import { ChevronsUpDown, Plus } from "lucide-react"
-
+import { School, Building2, MapPin, Sparkles, ChevronsUpDown } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu"
 import {
@@ -16,22 +14,29 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "../ui/sidebar"
+import { useUser } from "../../context/UserContext"
+import API from "../../lib/axios"
+import type { SchoolType } from "../../types/SchoolType"
 
-export function TeamSwitcher({
-  teams,
-}: {
-  teams: {
-    name: string
-    logo: React.ElementType
-    plan: string
-  }[]
-}) {
+export function TeamSwitcher() {
+  const { user } = useUser()
+  const [school, setSchool] = React.useState<SchoolType | null>(null)
   const { isMobile } = useSidebar()
-  const [activeTeam, setActiveTeam] = React.useState(teams[0])
 
-  if (!activeTeam) {
-    return null
-  }
+  React.useEffect(() => {
+    if (user?.school_id) {
+      API.get(`/schools/${user.school_id}`)
+        .then((res) => {
+          setSchool(res.data)
+        })
+        .catch((err) => {
+          console.error("Error fetching school for parent:", err)
+        })
+    }
+  }, [user?.school_id])
+
+  const schoolName = school?.name || "School Portal"
+  const schoolSubtitle = school?.address || "Parent Portal"
 
   return (
     <SidebarMenu>
@@ -40,16 +45,28 @@ export function TeamSwitcher({
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground hover:bg-sidebar-accent/60 transition-colors"
             >
-              <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                <activeTeam.logo className="size-4" />
+              <div className="bg-primary/10 text-primary flex aspect-square size-9 items-center justify-center rounded-lg border border-primary/20 overflow-hidden shrink-0 shadow-xs">
+                {school?.logo_url ? (
+                  <img
+                    src={school.logo_url}
+                    alt={schoolName}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <School className="size-5 text-primary" />
+                )}
               </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{activeTeam.name}</span>
-                <span className="truncate text-xs">{activeTeam.plan}</span>
+              <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
+                <span className="truncate font-semibold text-foreground text-sm">
+                  {schoolName}
+                </span>
+                <span className="truncate text-xs text-muted-foreground">
+                  {schoolSubtitle}
+                </span>
               </div>
-              <ChevronsUpDown className="ml-auto" />
+              <ChevronsUpDown className="ml-auto size-4 text-muted-foreground shrink-0" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -59,27 +76,24 @@ export function TeamSwitcher({
             sideOffset={4}
           >
             <DropdownMenuLabel className="text-muted-foreground text-xs">
-              Teams
+              ព័ត៌មានសាលារៀន (School Details)
             </DropdownMenuLabel>
-            {teams.map((team, index) => (
-              <DropdownMenuItem
-                key={team.name}
-                onClick={() => setActiveTeam(team)}
-                className="gap-2 p-2"
-              >
-                <div className="flex size-6 items-center justify-center rounded-md border">
-                  <team.logo className="size-3.5 shrink-0" />
-                </div>
-                {team.name}
-                <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
-              </DropdownMenuItem>
-            ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 p-2">
-              <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
-                <Plus className="size-4" />
+            <div className="p-2 space-y-1">
+              <div className="flex items-center gap-2 font-semibold text-sm text-foreground">
+                <Building2 className="size-4 text-primary shrink-0" />
+                <span className="truncate">{schoolName}</span>
               </div>
-              <div className="text-muted-foreground font-medium">Add team</div>
+              {school?.address && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <MapPin className="size-3.5 shrink-0" />
+                  <span className="truncate">{school.address}</span>
+                </div>
+              )}
+            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="gap-2 p-2 text-xs text-muted-foreground">
+              <Sparkles className="size-3.5 text-primary" />
+              <span>Parent Portal</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

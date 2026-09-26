@@ -1,4 +1,4 @@
-// src/pages/school/SchoolUser.tsx (or wherever your UserTable lives)
+// src/pages/school/SchoolUser.tsx
 import { useState } from "react";
 import useFetchData from "../../hooks/useFetchData";
 import { Button } from "../../components/ui/button";
@@ -9,19 +9,22 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Skeleton } from "../../components/ui/skeleton";
 import SchoolUserCreateModal from "../../components/school/school-createUserModal";
 import SchoolUserEditModal from "../../components/school/School-userEditModal";
+import ChangePasswordModal from "../../components/ChangePasswordModal";
 import UserDetail from "../../components/school/school_user_detail";
 import type { EditUser } from "../../components/school/School-userEditModal";
-import type {UserType} from "../../types/User";
-import { Users, Plus, Edit, School, Mail, UserCheck, UserX, Eye } from "lucide-react";
-
+import type { UserType } from "../../types/User";
+import { Users, Plus, Edit, Mail, UserCheck, UserX, Eye, KeyRound } from "lucide-react";
 
 export default function UserTable() {
   const { data: users, loading, refetch } = useFetchData<UserType>("/users");
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+
   const [editing, setEditing] = useState<UserType | null>(null);
   const [viewingUser, setViewingUser] = useState<UserType | null>(null);
+  const [passwordUser, setPasswordUser] = useState<UserType | null>(null);
 
   if (loading) {
     return (
@@ -58,23 +61,30 @@ export default function UserTable() {
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
-      case 'super_admin': return 'destructive';
-      case 'admin': return 'default';
-      case 'teacher': return 'secondary';
-      case 'parent': return 'outline';
-      default: return 'outline';
+      case "super_admin":
+        return "destructive";
+      case "admin":
+        return "default";
+      case "teacher":
+        return "secondary";
+      case "parent":
+        return "outline";
+      default:
+        return "outline";
     }
   };
 
   const getStatusBadgeVariant = (status: string) => {
-    return status === 'active' ? 'default' : 'secondary';
+    return status === "active" ? "default" : "secondary";
   };
 
   const getInitials = (name: string) => {
+    if (!name) return "U";
     return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
+      .split(" ")
+      .filter(Boolean)
+      .map((n) => n[0])
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
@@ -82,6 +92,11 @@ export default function UserTable() {
   const handleViewDetail = (user: UserType) => {
     setViewingUser(user);
     setDetailOpen(true);
+  };
+
+  const handleChangePassword = (user: UserType) => {
+    setPasswordUser(user);
+    setPasswordModalOpen(true);
   };
 
   return (
@@ -95,7 +110,7 @@ export default function UserTable() {
             </div>
             <div className="flex items-center gap-4">
               <Badge variant="secondary" className="text-sm">
-                {userList.length} {userList.length === 1 ? 'User' : 'Users'}
+                {userList.length} {userList.length === 1 ? "User" : "Users"}
               </Badge>
               <Button onClick={() => setCreateOpen(true)} className="gap-2">
                 <Plus className="h-4 w-4" />
@@ -121,7 +136,7 @@ export default function UserTable() {
               </Button>
             </div>
           ) : (
-            <div className="border rounded-lg">
+            <div className="border rounded-lg overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50/50">
@@ -129,7 +144,6 @@ export default function UserTable() {
                     <TableHead>User</TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead>Role</TableHead>
-                    {/* <TableHead>School</TableHead> */}
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -143,12 +157,18 @@ export default function UserTable() {
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="h-10 w-10">
-                            <AvatarFallback className={`${u.avatar_url ? '' : 'bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold'}`}>
+                            <AvatarFallback
+                              className={`${
+                                u.avatar_url
+                                  ? ""
+                                  : "bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold"
+                              }`}
+                            >
                               {u.avatar_url ? (
-                                <img 
-                                  src={u.avatar_url} 
-                                  alt={u.name} 
-                                  className="h-full w-full object-cover alig"
+                                <img
+                                  src={u.avatar_url}
+                                  alt={u.name}
+                                  className="h-full w-full object-cover"
                                 />
                               ) : (
                                 getInitials(u.name)
@@ -157,7 +177,7 @@ export default function UserTable() {
                           </Avatar>
                           <div>
                             <div className="font-medium text-gray-900">{u.name}</div>
-                            <div className="text-sm text-gray-500">ID: {u._id.slice(-8)}</div>
+                            <div className="text-sm text-gray-500 font-mono">ID: {u._id.slice(-8)}</div>
                           </div>
                         </div>
                       </TableCell>
@@ -169,41 +189,50 @@ export default function UserTable() {
                       </TableCell>
                       <TableCell>
                         <Badge variant={getRoleBadgeVariant(u.role)} className="font-medium">
-                          {u.role === 'super_admin' ? 'Super Admin' : 
-                           u.role === 'admin' ? 'School Admin' : 
-                           u.role.charAt(0).toUpperCase() + u.role.slice(1)}
+                          {u.role === "super_admin"
+                            ? "Super Admin"
+                            : u.role === "admin"
+                            ? "School Admin"
+                            : u.role.charAt(0).toUpperCase() + u.role.slice(1)}
                         </Badge>
                       </TableCell>
-                      {/* <TableCell>
-                        <div className="flex items-center gap-2">
-                          <School className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm">{u.school_id || '—'}</span>
-                        </div>
-                      </TableCell> */}
                       <TableCell>
-                        <Badge 
-                          variant={getStatusBadgeVariant(u.status || 'active')} 
+                        <Badge
+                          variant={getStatusBadgeVariant(u.status || "active")}
                           className="gap-1 font-medium"
                         >
-                          {(u.status || 'active') === 'active' ? (
+                          {(u.status || "active") === "active" ? (
                             <UserCheck className="h-3 w-3" />
                           ) : (
                             <UserX className="h-3 w-3" />
                           )}
-                          {(u.status || 'active').charAt(0).toUpperCase() + (u.status || 'active').slice(1)}
+                          {(u.status || "active").charAt(0).toUpperCase() +
+                            (u.status || "active").slice(1)}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end items-center gap-1.5">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleChangePassword(u)}
+                            className="h-8 gap-1.5 text-xs text-amber-700 bg-amber-50/60 border-amber-200 hover:bg-amber-100 hover:text-amber-800"
+                            title="Change User Password"
+                          >
+                            <KeyRound className="h-3.5 w-3.5" />
+                            Change Pass
+                          </Button>
+
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => handleViewDetail(u)}
-                            className="gap-1 hover:bg-blue-50 hover:border-blue-200"
+                            className="h-8 gap-1 text-xs hover:bg-blue-50 hover:border-blue-200"
                           >
-                            <Eye className="h-3 w-3" />
+                            <Eye className="h-3.5 w-3.5" />
                             View
                           </Button>
+
                           <Button
                             size="sm"
                             variant="outline"
@@ -211,9 +240,9 @@ export default function UserTable() {
                               setEditing(u);
                               setEditOpen(true);
                             }}
-                            className="gap-1 hover:bg-blue-50 hover:border-blue-200"
+                            className="h-8 gap-1 text-xs hover:bg-blue-50 hover:border-blue-200"
                           >
-                            <Edit className="h-3 w-3" />
+                            <Edit className="h-3.5 w-3.5" />
                             Edit
                           </Button>
                         </div>
@@ -234,7 +263,7 @@ export default function UserTable() {
         onCreated={refetch}
       />
 
-      {/* Edit */}
+      {/* Edit User Modal (clean UI, without password reset) */}
       <SchoolUserEditModal
         open={editOpen}
         onClose={() => setEditOpen(false)}
@@ -245,7 +274,7 @@ export default function UserTable() {
                 name: editing.name,
                 email: editing.email,
                 role: editing.role as EditUser["role"],
-                schoolId: editing.school_id,
+                school_id: editing.school_id,
                 status: editing.status as EditUser["status"],
               } as EditUser)
             : null
@@ -253,9 +282,16 @@ export default function UserTable() {
         onSaved={refetch}
       />
 
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        open={passwordModalOpen}
+        onClose={() => setPasswordModalOpen(false)}
+        user={passwordUser}
+        onSuccess={refetch}
+      />
+
       {/* Detail */}
       <UserDetail
-      
         user={viewingUser}
         open={detailOpen}
         onClose={() => setDetailOpen(false)}

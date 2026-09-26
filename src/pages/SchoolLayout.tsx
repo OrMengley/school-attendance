@@ -11,58 +11,115 @@ import {
   BreadcrumbSeparator,
 } from "../components/ui/breadcrumb";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
+
+// Helper to detect if a URL segment is an ID / UUID / hash
+const isIdSegment = (segment: string): boolean => {
+  if (!segment) return false;
+  // student-xxx, user-xxx, term-xxx, classroom-xxx, etc.
+  if (/^(student|user|school|classroom|term|department|grade|dept)-[a-zA-Z0-9-]+$/i.test(segment)) {
+    return true;
+  }
+  // Standard UUID format
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment)) {
+    return true;
+  }
+  // MongoDB 24-character ObjectId
+  if (/^[0-9a-fA-F]{24}$/.test(segment)) {
+    return true;
+  }
+  // Generic IDs with hyphens/numbers > 15 chars
+  if (segment.length > 15 && /[0-9]/.test(segment) && /[-_]/.test(segment)) {
+    return true;
+  }
+  return false;
+};
+
+// Friendly labels for breadcrumbs
+const pathLabels: Record<string, string> = {
+  school: "School",
+  student: "Student",
+  students: "Students",
+  enrollment: "Enrollment",
+  classroom: "Classroom",
+  classrooms: "Classrooms",
+  term: "Term",
+  terms: "Terms",
+  grade: "Grade",
+  grades: "Grades",
+  department: "Department",
+  user: "User",
+  users: "Users",
+  parents: "Parents",
+  settings: "Settings",
+  dashboard: "Dashboard",
+  trash: "Trash",
+};
 
 export default function SchoolLayout() {
-  
-  const [urlPath, setUrlPath] = useState<string[]>([]);
+  const location = useLocation();
 
-  const url = useLocation();
+  const breadcrumbItems = useMemo(() => {
+    const rawSegments = location.pathname.split("/").filter(Boolean);
+    const validSegments: { label: string; href: string }[] = [];
+    let currentPath = "";
 
-  useEffect(() => {
-    const paths: string[] = url.pathname.split("/");
-    // "", "trash", "pat"
-    paths.shift();
-    
-    setUrlPath(paths);
-  }, [url]);
+    let trailingId = false;
+    for (const segment of rawSegments) {
+      currentPath += `/${segment}`;
+      if (!isIdSegment(segment)) {
+        const label =
+          pathLabels[segment.toLowerCase()] ||
+          (segment.charAt(0).toUpperCase() + segment.slice(1));
+        validSegments.push({
+          label,
+          href: currentPath,
+        });
+      } else {
+        trailingId = true;
+      }
+    }
 
- 
+    // If the path ends with an ID (e.g. /school/student/:id), append "Detail" as the current page
+    if (trailingId && isIdSegment(rawSegments[rawSegments.length - 1])) {
+      validSegments.push({
+        label: "Detail",
+        href: currentPath,
+      });
+    }
+
+    return validSegments;
+  }, [location.pathname]);
 
   return (
     <div className="flex min-h-screen w-full">
-      {" "}
-      <AppSidebar className="w-64 shrink-0" />{" "}
+      <AppSidebar className="w-64 shrink-0" />
       
       <div className="flex flex-1 flex-col bg-gray-50">
-        {" "}
-        
         <header className="flex h-16 items-center gap-2 bg-white shadow-sm px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink>
-                  Building Your Application
+                <BreadcrumbLink asChild>
+                  <Link to="/school">Building Your Application</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
 
-              {urlPath.map((e, i: number) => {
-                const path = e && String(e[0]).toUpperCase() + String(e).slice(1);
+              {breadcrumbItems.map((item, i) => {
+                const isLast = i === breadcrumbItems.length - 1;
                 return (
-                  <React.Fragment key={i}>
+                  <React.Fragment key={item.href}>
                     <BreadcrumbSeparator className="hidden md:block" />
-                    {i == urlPath.length - 1 ? (
+                    {isLast ? (
                       <BreadcrumbItem>
-                        <BreadcrumbPage>{path}</BreadcrumbPage>
+                        <BreadcrumbPage>{item.label}</BreadcrumbPage>
                       </BreadcrumbItem>
                     ) : (
                       <BreadcrumbItem className="hidden md:block">
-                        <BreadcrumbLink  asChild>
-                        <Link to={path}>
-                          {path}
-                        </Link>
+                        <BreadcrumbLink asChild>
+                          <Link to={item.href}>{item.label}</Link>
                         </BreadcrumbLink>
                       </BreadcrumbItem>
                     )}
@@ -74,7 +131,7 @@ export default function SchoolLayout() {
         </header>
         {/* Main Content Area */}
         <div className="p-4">
-        <Outlet/>
+          <Outlet />
         </div>
       </div>
     </div>

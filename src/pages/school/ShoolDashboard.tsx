@@ -1,3 +1,1 @@
-export default function SchoolDashboard() {
-    return <div>School Dashboard</div>;
-}
+export { default } from "./SchoolDashboard";

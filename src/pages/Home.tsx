@@ -20,10 +20,7 @@ export default function Home() {
   const url = useLocation();
 
   useEffect(() => {
-    const paths: string[] = url.pathname.split("/");
-    // "", "trash", "pat"
-    paths.shift();
-    
+    const paths: string[] = url.pathname.split("/").filter(Boolean);
     setUrlPath(paths);
   }, [url]);
 
@@ -44,26 +41,29 @@ export default function Home() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink>
-                  Building Your Application
+                <BreadcrumbLink asChild>
+                  <Link to="/">Dashboard</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
 
               {urlPath.map((e, i: number) => {
-                const path = e && String(e[0]).toUpperCase() + String(e).slice(1);
+                const name = e && String(e[0]).toUpperCase() + String(e).slice(1);
+                const fullPath = "/" + urlPath.slice(0, i + 1).join("/");
+                const isLast = i === urlPath.length - 1;
+
                 return (
                   <React.Fragment key={i}>
                     <BreadcrumbSeparator className="hidden md:block" />
-                    {i == urlPath.length - 1 ? (
+                    {isLast ? (
                       <BreadcrumbItem>
-                        <BreadcrumbPage>{path}</BreadcrumbPage>
+                        <BreadcrumbPage>{name}</BreadcrumbPage>
                       </BreadcrumbItem>
                     ) : (
                       <BreadcrumbItem className="hidden md:block">
-                        <BreadcrumbLink  asChild>
-                        <Link to={path}>
-                          {path}
-                        </Link>
+                        <BreadcrumbLink asChild>
+                          <Link to={fullPath}>
+                            {name}
+                          </Link>
                         </BreadcrumbLink>
                       </BreadcrumbItem>
                     )}

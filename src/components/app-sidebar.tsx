@@ -24,30 +24,7 @@ import {
   SidebarRail,
 } from "./ui/sidebar"
 
-// This is sample data.
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  teams: [
-    {
-      name: "Acme Inc",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
-  ],
   navMain: [
     {
       title: "Viewer",
@@ -56,20 +33,16 @@ const data = {
       isActive: true,
       items: [
         {
-          title: "Dashboard",
-          url: "/view/dashboard",
+          title: "Schools",
+          url: "/view/school",
         },
         {
-          title: "School",
-          url: "/view/school",
+          title: "Users",
+          url: "/view/users",
         },
         {
           title: "Classroom",
           url: "/view/classroom",
-        },
-        {
-          title: "Users",
-          url: "/view/user",
         },
       ],
     },
@@ -80,7 +53,7 @@ const data = {
       items: [
         {
           title: "Schools",
-          url:"/creator/school",
+          url: "/creator/school",
         },
         {
           title: "Users",
@@ -120,29 +93,18 @@ const data = {
           title: "General",
           url: "#",
         },
-        
       ],
     },
   ],
   projects: [
     {
-      name: "Dashboard",
-      url: "#",
+      name: "Schools",
+      url: "/view/school",
       icon: Frame,
-    },
-    {
-      name: "Terms",
-      url: "#",
-      icon: Frame,
-    },
-    {
-      name: "Classes",
-      url: "#",
-      icon: PieChart,
     },
     {
       name: "Users",
-      url: "#",
+      url: "/view/users",
       icon: Map,
     },
   ],
@@ -152,7 +114,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        <TeamSwitcher />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />

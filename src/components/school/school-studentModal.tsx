@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { storage } from "../../firebase";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { uploadToCloudinary } from "../../lib/cloudinary";
 import { format } from "date-fns";
 import { ChevronDownIcon } from "lucide-react";
 import {
@@ -55,30 +54,20 @@ export default function CreateStudentModal({ isOpen, onClose, initialData, onSuc
             setUploading(true);
             setUploadProgress(0);
             try {
-                const folderPath = `students/profile/${file.name}`;
-                const storageRef = ref(storage, folderPath);
-                // Upload with progress
-                const uploadTask = uploadBytesResumable(storageRef, file);
-                uploadTask.on(
-                    "state_changed",
-                    (snapshot) => {
-                        const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                const downloadURL = await uploadToCloudinary(file, {
+                    folder: "students/profile",
+                    onProgress: (percent) => {
                         setUploadProgress(percent);
                     },
-                    (err) => {
-                        setError("Failed to upload image: " + err.message);
-                        setUploading(false);
-                    },
-                    async () => {
-                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                        setUrl(downloadURL);
-                        setProfileUrl(downloadURL);
-                        setUploading(false);
-                        setUploadProgress(100);
-                    }
-                );
+                });
+                setUrl(downloadURL);
+                setProfileUrl(downloadURL);
+                setUploading(false);
+                setUploadProgress(100);
             } catch (err: any) {
-                setError("Failed to upload image: " + err.message);
+                const msg = err?.response?.data?.error?.message || err?.message || "Failed to upload image";
+                setError("Failed to upload image: " + msg);
+                toast.error("Failed to upload image: " + msg);
                 setUploading(false);
             }
         }

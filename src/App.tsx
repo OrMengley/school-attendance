@@ -19,6 +19,7 @@ import UserPage from "./pages/Users";
 import SchoolPage from "./pages/Schools";
 import CreateSchoolPage from "./components/CreateSchool.tsx";
 import CreateUserPage from "./components/CreateUser.tsx";
+import CreateClassPage from "./components/CreateClass.tsx";
 
 // Teacher Pages
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
@@ -26,12 +27,15 @@ import TeacherClassroomAttendance from "./pages/teacher/TeacherClassroomAttendan
 import TeacherProfile from "./pages/teacher/TeacherProfile";
 
 // School Pages
-import SchoolDashboard from "./pages/school/ShoolDashboard";
+import SchoolDashboard from "./pages/school/SchoolDashboard";
 import SchoolTerm from "./pages/school/SchoolTerm";
 import SchoolClassroom from "./pages/school/SchoolClassroom";
 import SchoolDepartment from "./pages/school/SchoolDepartment";
 import SchoolGrade from "./pages/school/SchoolGrade";
 import SchoolStudent from "./pages/school/SchoolStudent";
+import SchoolStudentDetail from "./pages/school/SchoolStudentDetail";
+import SchoolEnrollment from "./pages/school/SchoolEnrollment";
+import SchoolStudentEnrollmentDetail from "./pages/school/SchoolStudentEnrollmentDetail";
 import SchoolUser from "./pages/school/SchoolUser";
 import SchoolUserTrash from "./pages/school/SchoolUserTrash";
 import SchoolClassroomTrash from "./pages/school/SchoolClassroomTrash";
@@ -42,6 +46,7 @@ import SchoolTermTrash from "./pages/school/SchoolTermTrash";
 import ParentDashboard from "./pages/parent/ParentDashboard";
 import ParentChildAttendance from "./pages/parent/ParentChildAttendance";
 import SchoolParents from "./pages/school/SchoolParent";
+import SchoolGeneralSettings from "./pages/school/SchoolGeneralSettings";
 import AccessDenied from "./pages/AccessDenied";
 import TeacherReportsHome from "./pages/teacher/reports/TeacherReportsHome";
 import ReportDailyAttendance from "./pages/teacher/reports/ReportDailyAttendance";
@@ -122,12 +127,20 @@ function App() {
                 <Route index element={<SchoolDashboard />} />
                 <Route path="dashboard" element={<SchoolDashboard />} />
                 <Route path="term" element={<SchoolTerm />} />
+                <Route path="terms" element={<SchoolTerm />} />
                 <Route path="classroom" element={<SchoolClassroom />} />
                 <Route path="user" element={<SchoolUser />} />
                 <Route path="department" element={<SchoolDepartment />} />
                 <Route path="grade" element={<SchoolGrade />} />
                 <Route path="student" element={<SchoolStudent />} />
+                <Route path="student/:studentId" element={<SchoolStudentDetail />} />
+                <Route path="student/:studentId/detail" element={<SchoolStudentDetail />} />
+                <Route path="student/:studentId/enrollment" element={<SchoolStudentEnrollmentDetail />} />
+                <Route path="enrollment" element={<SchoolEnrollment />} />
+                <Route path="enrollment/:studentId" element={<SchoolStudentEnrollmentDetail />} />
                 <Route path="parents" element={<SchoolParents />} />
+                <Route path="settings" element={<SchoolGeneralSettings />} />
+                <Route path="settings/general" element={<SchoolGeneralSettings />} />
                 {/* Trash Pages */}
                 <Route path="trash/user" element={<SchoolUserTrash />} />
                 <Route path="trash/classroom" element={<SchoolClassroomTrash />} />
@@ -135,6 +148,7 @@ function App() {
                 <Route path="trash/grade" element={<SchoolGradeTrash />} />
                 <Route path="trash/student" element={<SchoolStudentTrash />} />
                 <Route path="trash/term" element={<SchoolTermTrash />} />
+                <Route path="trash/terms" element={<SchoolTermTrash />} />
               </Route>
 
 
@@ -149,13 +163,19 @@ function App() {
                 }
               >
                 <Route index element={<SchoolPage />} />
-                <Route path="view/users" element={<UserPage />} />
-                <Route path="view/classroom" element={<UserPage />} />
+                <Route path="schools" element={<SchoolPage />} />
+                <Route path="users" element={<UserPage />} />
                 <Route path="view/school" element={<SchoolPage />} />
-                <Route path="view/dashboard" element={<UserPage />} />
-                <Route path="creator/user" element={<CreateUserPage />} />
-                <Route path="creator/classroom" element={<UserPage />} />
+                <Route path="view/schools" element={<SchoolPage />} />
+                <Route path="view/users" element={<UserPage />} />
+                <Route path="view/user" element={<UserPage />} />
+                <Route path="view/classroom" element={<UserPage />} />
+                <Route path="view/dashboard" element={<SchoolPage />} />
                 <Route path="creator/school" element={<CreateSchoolPage />} />
+                <Route path="creator/schools" element={<CreateSchoolPage />} />
+                <Route path="creator/user" element={<CreateUserPage />} />
+                <Route path="creator/users" element={<CreateUserPage />} />
+                <Route path="creator/classroom" element={<CreateClassPage />} />
               </Route>
 
               {/* Unauthorized fallback */}

@@ -1,17 +1,11 @@
 import * as React from "react"
 import {
-    AudioWaveform,
-    Command,
-    Frame,
-    GalleryVerticalEnd,
     Settings2,
     SquareTerminal,
-    Plus,
     Trash
 } from "lucide-react"
 
 import {NavMain} from "./nav-main"
-import {NavProjects} from "./nav-projects"
 import {NavUser} from "./nav-user"
 import {TeamSwitcher} from "./team-switcher"
 import {
@@ -22,28 +16,7 @@ import {
     SidebarRail
 } from "../ui/sidebar"
 
-// This is sample data.
 const data = {
-    user: {
-        name: "School",
-        email: "school@example.com",
-        avatar: "/avatars/school.jpg"
-    },
-    teams: [
-        {
-            name: "Acme Inc",
-            logo: GalleryVerticalEnd,
-            plan: "Enterprise"
-        }, {
-            name: "Acme Corp.",
-            logo: AudioWaveform,
-            plan: "Startup"
-        }, {
-            name: "Evil Corp.",
-            logo: Command,
-            plan: "Free"
-        },
-    ],
     navMain: [
         {
             title: "Viewer",
@@ -72,6 +45,9 @@ const data = {
                 }, {
                     title: "Students",
                     url: "/school/student"
+                }, {
+                    title: "Enrollment",
+                    url: "/school/enrollment"
                 },
                 {
                     title: "Users",
@@ -79,35 +55,6 @@ const data = {
                 }, 
             ]
         }, 
-        
-        // {
-        //     title: "Creator",
-        //     url: "/school/creator",
-        //     icon: Plus,
-        //     items: [
-        //         {
-        //             title: "User",
-        //             url: "/school/creator/user"
-        //         },
-        //         {
-        //             title: "Term",
-        //             url: "/school/creator/term"
-        //         },
-        //         {
-        //             title: "Grade",
-        //             url: "/school/creator/grade"
-        //         },
-        //         {
-        //             title: "Classroom",
-        //             url: "/school/creator/classroom"
-        //         }, {
-        //             title: "Student",
-        //             url: "/school/creator/student"
-        //         },
-
-        //     ]
-        // },
-        
         {
             title: "Trash",
             url: "/school/trash",
@@ -133,7 +80,6 @@ const data = {
                     title: "Student",
                     url: "/school/trash/student"
                 },
-
             ]
         }, {
             title: "Settings",
@@ -144,16 +90,8 @@ const data = {
                     title: "General",
                     url: "/school/settings/general"
                 },
-
             ]
         },
-    ],
-    projects: [
-        {
-            name: "Dashboard",
-            url: "#",
-            icon: Frame
-        }
     ]
 }
 
@@ -163,16 +101,11 @@ export function AppSidebar({
     return (
         <Sidebar collapsible="icon" {...props}>
             <SidebarHeader>
-                <TeamSwitcher teams={
-                    data.teams
-                }/>
+                <TeamSwitcher />
             </SidebarHeader>
             <SidebarContent>
                 <NavMain items={
                     data.navMain
-                }/>
-                <NavProjects projects={
-                    data.projects
                 }/>
             </SidebarContent>
             <SidebarFooter>
